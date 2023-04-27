@@ -214,6 +214,7 @@ $(document).ready(()=>{
         onDragStart: null,      // hook into start drag operation (event,$el,opt passed - return false to abort drag)           
         onDragEnd: null,        // hook into stop drag operation (event,$el,opt passed)        
         onDrag: null,           // hook into each drag operation (event,$el,opt passed)
+        eventMinWidth: 4        // in hours
     });
     //Включаю все подсказки при наведении
     var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
@@ -402,7 +403,8 @@ function DrawSchedule(schedule)
         for(var i = 0; i < daysDifference; i++){
             //Колонка день
             var timeZone = document.createElement('li');
-            timeZone.classList = 'day';            
+            timeZone.classList = 'day';    
+            timeZone.setAttribute('childnumber', i+1)        
             timeZone.addEventListener('click', schedule.scheduleEvents.lClick);
             timeZone.addEventListener('contextmenu', schedule.scheduleEvents.rClick);
             timeZone.style = 'min-height: 3.2rem;';

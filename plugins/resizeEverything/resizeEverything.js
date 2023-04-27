@@ -37,6 +37,7 @@
             touchActionNone: true,
             // instance id
             instanceId: null,
+            eventMinWidth: 4
     };
         if (typeof options == "object")
             defaultOptions = $.extend(defaultOptions, options);
@@ -148,7 +149,39 @@
             }
 
             function doDrag(e) { 
-                let pos = getMousePos(e)                 
+                let pos = getMousePos(e)
+
+                let dayWidth = $('.day').width()
+                let minWidth = dayWidth / options.eventMinWidth
+
+                let eventWidthPx = $($el).width()
+                let elParent = $($el).parent()
+                let parentWidthPx = $(elParent).width()
+                let eventWidthPrc = parentWidthPx / eventWidthPx * 100
+                let parentOfParent = $(elParent).parent()
+                let dayscount = $(parentOfParent).children()
+                let childNumber = $(elParent).attr('childnumber')
+                
+                let hz = 0
+                for (let index = 1; index < childNumber; index++) {
+                   hz++
+                }
+
+                let commonw = dayWidth * 6                
+                let leftBorder = hz * dayWidth                
+                let ll = Number($($el).css('left').slice(0,-2))
+                let leftRange = eventWidthPx + leftBorder + ll
+                let rightRange = (commonw - leftBorder - ll)
+                console.log(eventWidthPx)
+                console.log(commonw)
+                // console.log(commonw)
+                // console.log(leftBorder)
+                // console.log(ll)
+                // console.log(eventWidthPx)
+                // console.log(commonw - leftBorder - ll - eventWidthPx)
+
+
+
                 if (whichHandle === 'r') {
                     if (opt.resizeWidthFrom === 'left')
                         newWidth = startPos.width - pos.x + startPos.x;
@@ -163,26 +196,41 @@
 
                     if (!opt.onDrag || opt.onDrag(e, $el, newWidth, newHeight, opt) !== false) {
                         if (opt.resizeHeight)
-                            $el.height(newHeight);                    
+                            $el.height(newHeight); 
 
-                        if (opt.resizeWidth)
-                            $el.width(newWidth);                    
+                        if (newWidth >= minWidth) {
+                            if (opt.resizeWidth){
+                                if (newWidth <= rightRange) {
+                                    // console.log(newWidth)
+                                    // console.log(rightRange)
+                                    $el.width(newWidth);  
+                                }                                  
+                            }
+                        }                                        
                     }   
                 }
                 else if (whichHandle === 'l') {
                     let differenceBetweenCursors = e.clientX - OLDX
-                    NEWX = e.clientX                  
+                    NEWX = e.clientX   
 
                     // разница больше 0, значит тянем вправо, уменьшая событие
                     if (differenceBetweenCursors > 0) {
                         NEWWIDTH = OLDWIDTH - (NEWX - OLDX)
+
+                        if (NEWWIDTH >= minWidth){
+                            $($el).css('left', NEWX - DIFF_BTW_CURSOR_N_LEFT + 'px').css('width', NEWWIDTH + 'px')
+                        }  
                     }
                     //тянем влево, увеличивая событие
                     else if (differenceBetweenCursors < 0){
                         NEWWIDTH = OLDWIDTH + (OLDX - NEWX)
-                    }
-
-                    $($el).css('left', NEWX - DIFF_BTW_CURSOR_N_LEFT + 'px').css('width', NEWWIDTH + 'px')
+                        
+                        if (NEWWIDTH >= minWidth){
+                            if (NEWWIDTH <= leftRange) {
+                                $($el).css('left', NEWX - DIFF_BTW_CURSOR_N_LEFT + 'px').css('width', NEWWIDTH + 'px')
+                            }                            
+                        }  
+                    }                  
                 }
             }
 
