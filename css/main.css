@@ -1,0 +1,83 @@
+
+#container{
+    position: relative;
+}
+
+.LocationsContainer, .DaysContainer, .GridHeader{
+    background-color: #ffffff;
+    display: inline-flex;
+    margin: 0;
+    padding: 0.25rem;
+    padding-left: 0.5rem;
+}
+
+.LocationRow{
+    border: 1px solid #F5F5F5;
+}
+
+.LocationsContainer{
+    background-color: #F5F5F5;
+    padding: 0.25rem;
+    padding-left: 0.5rem;
+    vertical-align: middle;
+}
+
+.day{
+    list-style-type: none;
+    padding-left: 0;
+    border: 0px solid black;
+    width: 100%;
+    height: 100%;
+    border-collapse: collapse;
+    position: relative;
+}
+
+.DaysContainer{
+    padding: 0;
+    
+}
+
+.DaysContainer .day:nth-child(even){
+    background-color: #F5F5F5;
+}
+
+.EventDetail{
+    position: absolute;
+    background-color: #6495ED;
+    height: 3rem;
+    padding-left: 0.5rem;
+    z-index: 1;
+}
+
+.EventDetail:hover{
+    background-color: #6495ED50;
+}
+
+.daysContextMenu{
+    position: absolute;
+    z-index: 2;
+}
+
+.daysContextMenu button{
+    padding: 0;
+    overflow: hidden;
+}
+
+.daysContextMenu button:hover{
+    background-color: #6495ED;
+    color: #ffffff;
+}
+
+.contextSpan{
+    font-size: 0.7rem;
+    white-space: nowrap;
+    margin: 0.25rem 0.5rem;
+}
+
+.EmptyRow{
+    border-top: none;
+}
+
+.noBottomBorder{
+    border-bottom: none;
+}
