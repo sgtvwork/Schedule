@@ -2,31 +2,30 @@
 <html lang="ru">
   <head>
     <!-- Обязательные метатеги -->
+    <title>Hello, world!</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-
     <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-+0n0xVW2eSR5OomGNYDnhzAbDsOXxcvSN1TPprVMTNDbiYZCxYbOOl7+AMvyTG2x" crossorigin="anonymous">
-
-    <title>Hello, world!</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/css/bootstrap.min.css" rel="stylesheet" 
+    integrity="sha384-+0n0xVW2eSR5OomGNYDnhzAbDsOXxcvSN1TPprVMTNDbiYZCxYbOOl7+AMvyTG2x" crossorigin="anonymous">
+    <!-- Resize CSS -->
+    <link rel="stylesheet" href="resizeEverything/resizeEverything.css">
   </head>
   <body>
-
     <!-- Необязательный JavaScript; выберите один из двух! -->
 
     <!-- Вариант 1: пакет Bootstrap с Popper -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/js/bootstrap.bundle.min.js" integrity="sha384-gtEjrD/SeCtmISkJkNUaaKMoLD0//ElJ19smozuHV6z3Iehds+3Ulb9Bn9Plx0x4" crossorigin="anonymous"></script>
     <script src="momnet.js"></script>
     <script src="jquery.js"></script>
-
-
+    
+    <!-- Custom scripts -->
+    <script src="resizeEverything/resizeEverything.js"></script>
     <!-- Просто блок в который помещаю элементэ -->
     <section id="container" class="container mt-4">
         
     </section>
-
   </body>
-
 <script>
 
 //#region scheduleDraw
@@ -207,6 +206,14 @@ var schedule = {
 $(document).ready(()=>{
     $('#container').html(DrawSchedule(schedule));
 
+    //Включение ресайза после отрисовки
+    $(".EventDetail").resizable({
+        resizeWidth: true,
+        resizeHeight: false,
+        onDragStart: null,      // hook into start drag operation (event,$el,opt passed - return false to abort drag)           
+        onDragEnd: null,        // hook into stop drag operation (event,$el,opt passed)        
+        onDrag: null,           // hook into each drag operation (event,$el,opt passed)
+    });
     //Включаю все подсказки при наведении
     var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
     
@@ -495,6 +502,8 @@ function DrawSchedule(schedule)
         //#endregion
     }
 
+    
+
     //-------------------------------------//
     
     //Добавляем события на основной элемент
@@ -550,7 +559,6 @@ function DrawContextMenu(contextContent){
 
     $('body').append(menuContainer);
 }
-
 </script>
 <style>
 
@@ -636,7 +644,6 @@ function DrawContextMenu(contextContent){
     .noBottomBorder{
         border-bottom: none;
     }
-
 </style>
 
 </html>

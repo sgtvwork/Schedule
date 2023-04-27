@@ -1,0 +1,22 @@
+.stickL{
+  position: absolute;
+  left: 0px;
+  bottom: 0px;
+  height: 10px;
+  width: 10px;
+  cursor: ew-resize;
+  background: white;
+  border-radius: 50%;
+  border: 3px solid blue;
+} 
+.stickR{
+  position: absolute;
+  right: 0px;
+  bottom: 0px;
+  height: 10px;
+  width: 10px;
+  cursor: ew-resize;
+  background: white;
+  border-radius: 50%;
+  border: 3px solid blue;
+}
