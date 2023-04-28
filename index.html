@@ -185,11 +185,15 @@ var dayContextMenu = [
 var scheduleEvents = {
     //Левый клик
     lClick: function(){
-        $(this).css('border', '1px solid red');        
+        $('.redBorder').removeClass('redBorder');
+        $('.blueBorder').removeClass('blueBorder');
+        $(this).addClass('redBorder');
     }
     //Правый клик
     , rClick: function(){
-        $(this).css('border', '1px solid blue');
+        $('.redBorder').removeClass('redBorder');
+        $('.blueBorder').removeClass('blueBorder');
+        $(this).addClass('blueBorder');
         DrawContextMenu(dayContextMenu);
         return false;
     }
@@ -216,79 +220,56 @@ $(document).ready(()=>{
         onDrag: null,           // hook into each drag operation (event,$el,opt passed)
         eventMinWidth: 4        // in hours
     });
+
     //Включаю все подсказки при наведении
     var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
     
     var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
         return new bootstrap.Tooltip(tooltipTriggerEl)
     });
+
+    var oldEventParams;
+
+    
+    
 });
 
 //Отрисовывает шахматку и возвращает как html объект
 function DrawSchedule(schedule)
 {
     console.log('schedule', schedule);
-    //Главный блок 
-
+    
     /*
         первоначально отрисовывается "шапка" таблицы, глобально она не отличается от обычных табличных строк
-
+        
         далее по очереди отрисовываются строки
         события помещаются в клетку дня в котором они начинаются, и от него и позиционируются
         если начинается ранее первого дня, оно помещается в 1й день
-
+        
         в каждую ячейку дня помещаются скрытые инпуты ("дата" и "id помещения")
-    */
-
-
+        */
+       
+       
+    //Главный блок 
     var container = document.createElement('div');
     container.classList = 'p-0 ScheduleContainer';
     $(container).on('contextmenu', function() {return false;});
-
     var daysDifference = schedule.end.diff(schedule.start, 'days') + 1; 
+
+    container.append(GetScheduleHeader(daysDifference));
     
-    //Строка шапки
-    var eventRowHeader = document.createElement('div');
-    eventRowHeader.classList = 'row LocationRow';
-    container.append(eventRowHeader);
-
-    //Помещение
-    var locationDivHeader = document.createElement('div');
-    locationDivHeader.classList = 'col-3 GridHeader';
-    locationDivHeader.innerText = 'Помещения';
-    eventRowHeader.append(locationDivHeader);
-
-    //Id помещения
-    var locationInputHeader = document.createElement('input');            
-    locationInputHeader.type = "hidden";
-    locationInputHeader.value = 0;
-    locationDivHeader.append(locationInputHeader);
-
-    //Контейнер дат в шапке
-    var eventsColumnHeader = document.createElement('div');
-    eventsColumnHeader.classList = 'col-9 GridHeader';
-    eventRowHeader.append(eventsColumnHeader);
-
-    var headerDate = schedule.start;
-
-    //Отрисовка шапки
-    for(var i = 0; i < daysDifference; i++){
-        //Колонка день
-        var timeZoneHeader = document.createElement('li');
-        timeZoneHeader.classList = 'day text-center';
-        timeZoneHeader.innerText = moment(headerDate).format('DD.MM.YYYY');
-        eventsColumnHeader.append(timeZoneHeader);
-
-        headerDate = moment(headerDate).add('1', 'day');
-    }
-
     //-------------------------------------//
    
     //Отрисовка помещений и событий
 
     for(var l = 0; l < schedule.locations.length; l++){
 
-        var location = schedule.locations[l];
+        GetLocationRow(schedule.locations[l].id);
+    }
+
+    function GetLocationRow(locationId){            
+
+        var location = schedule.locations.find(x=>x.id == locationId);
 
         //#region Левая колонка
         //Строка помещения
@@ -296,92 +277,15 @@ function DrawSchedule(schedule)
         eventRow.classList = 'row LocationRow';
         container.append(eventRow);
 
-        //Событие при наведении мыши (закоментил чтоб не мешало)
-        // eventRow.addEventListener('mouseenter',(elem)=>{
-            
-        //     if(this != undefined){
-
-        //         $('.EmptyRow').remove();
-        //         $('.noBottomBorder').removeClass('noBottomBorder');
-
-        //         if($(elem.target).find('.GridHeader').length == 0)
-        //         {
-        //             var currentElem = elem.target;
-        //             var relateElement = $(elem.relatedTarget).parents('.LocationRow:first')[0];
-                    
-        //             console.log('currentElem',currentElem);
-
-        //             if(relateElement == undefined){
-        //                 relateElement = elem.relatedTarget;
-        //                 console.log('relateElement NULL',relateElement);
-        //             }else{
-        //                 console.log('relateElement',relateElement);
-        //             }
-
-        //             //Главный блок 
-        //             var emptyContainer = document.createElement('div');
-        //             emptyContainer.classList = 'row LocationRow EmptyRow';
-        //             $(emptyContainer).on('contextmenu', function() {return false;});
-
-        //             //Помещение
-        //             var emptyLocationDivHeader = document.createElement('div');
-        //             emptyLocationDivHeader.classList = 'col-3 LocationsContainer';
-        //             emptyContainer.append(emptyLocationDivHeader);
-
-        //             //Id помещения
-        //             var emptyLocationInputHeader = document.createElement('input');            
-        //             emptyLocationInputHeader.type = "hidden";
-        //             emptyLocationInputHeader.value = 0;
-        //             emptyLocationDivHeader.append(emptyLocationInputHeader);
-
-        //             //Контейнер дат в шапке
-        //             var emptyEventsColumnHeader = document.createElement('div');
-        //             emptyEventsColumnHeader.classList = 'col-9 DaysContainer';
-        //             emptyContainer.append(emptyEventsColumnHeader);
-
-        //             var emptyDate = schedule.start;
-
-        //             //Отрисовка шапки
-        //             for(var i = 0; i < daysDifference; i++){
-        //                 //Колонка день
-        //                 var timeZone = document.createElement('li');
-        //                 timeZone.classList = 'day';
-        //                 emptyEventsColumnHeader.append(timeZone);
-                        
-        //                 var dateInfo = document.createElement('input');
-        //                 dateInfo.type = 'hidden';
-        //                 dateInfo.name = 'Date';
-        //                 dateInfo.value = emptyDate.toISOString();
-        //                 timeZone.append(dateInfo);
-
-        //                 var locationInfo = document.createElement('input');
-        //                 locationInfo.type = 'hidden';
-        //                 locationInfo.name = 'LocationId';
-        //                 locationInfo.value = location.id ;
-        //                 timeZone.style = 'min-height: 3.2rem;';
-
-        //                 emptyDate = moment(headerDate).add('1', 'day');
-        //             }
-
-
-        //             $(currentElem).after(emptyContainer);
-        //             $(currentElem).addClass('noBottomBorder');
-
-        //         }
-
-        //         console.log(elem);
-        //     }
-            
-        // });
-
         //Помещение
         var locationDiv = document.createElement('div');
         locationDiv.classList = 'col-3 LocationsContainer';
         locationDiv.innerText = location.name;
         eventRow.append(locationDiv);
-
+        
         //Id помещения
         var locationInput= document.createElement('input');            
+        locationInput.name = 'LocationId';
         locationInput.type = "hidden";
         locationInput.value = location.id;
         locationDiv.append(locationInput);
@@ -393,7 +297,7 @@ function DrawSchedule(schedule)
         var eventsColumn = document.createElement('div');
         eventsColumn.classList = 'col-9 DaysContainer';
         eventRow.append(eventsColumn);
-        
+
         var date = moment(schedule.start);
 
         //Уже отрисованные элементы в этой строке (нужен для определения отступа сверху)
@@ -446,11 +350,16 @@ function DrawSchedule(schedule)
                     //Отступ сверху
                     var top = alreadyPushedEvents.filter(x=>x.locationId == currEvent.locationId && x.start < currEvent.end && x.end > currEvent.start).length;
 
-                    //Деталь мероприятия (полоска)
+                    //Контейнер детали мероприятия (полоска)
                     var eventProgress = document.createElement('div');
                     eventProgress.classList = 'EventDetail ' + currEvent.extClass;
                     eventProgress.setAttribute('data-bs-toggle','tooltip');
                     eventProgress.setAttribute('title', currEvent.name + ' \r\n' + currEvent.start.format('DD.MM.YYYY HH:mm') + ' - ' + currEvent.end.format('DD.MM.YYYY HH:mm'));
+                    $(eventProgress).mousedown(
+                        (event)=>{
+                            DragEvent(event, eventProgress);
+                        }
+                    );
 
                     //Расчет длины события (не лезь сюда, оно тебя сожрет) 
                     if(currEvent.start >= schedule.start && currEvent.end <= schedule.end)
@@ -493,6 +402,13 @@ function DrawSchedule(schedule)
                     eventDuration.classList = 'm-0 p-0 overflow-hidden text-nowrap fs-6';
                     eventDuration.innerText = currEvent.start.format('DD.MM.YYYY HH:mm') + ' - ' + currEvent.end.format('DD.MM.YYYY HH:mm');
                     eventProgress.append(eventDuration);
+                    
+                    //Data мероприятия
+                    var eventId = document.createElement('input');
+                    eventId.type = 'hidden';
+                    eventId.name = 'EventData';
+                    eventId.value = JSON.stringify(currEvent);//JSON.parse('{"a":1,"b":2}'); 
+                    eventProgress.append(eventId);
 
                     //Добавляем в отрисованные
                     alreadyPushedEvents.push(currEvent);
@@ -505,8 +421,44 @@ function DrawSchedule(schedule)
         //#endregion
     }
 
-    
+    function GetScheduleHeader(daysDifference){
 
+        //Строка шапки
+        var eventRowHeader = document.createElement('div');
+        eventRowHeader.classList = 'row LocationRow';
+
+        //Помещение
+        var locationDivHeader = document.createElement('div');
+        locationDivHeader.classList = 'col-3 GridHeader';
+        locationDivHeader.innerText = 'Помещения';
+        eventRowHeader.append(locationDivHeader);
+
+        //Id помещения
+        var locationInputHeader = document.createElement('input');            
+        locationInputHeader.type = "hidden";
+        locationInputHeader.value = 0;
+        locationDivHeader.append(locationInputHeader);
+
+        //Контейнер дат в шапке
+        var eventsColumnHeader = document.createElement('div');
+        eventsColumnHeader.classList = 'col-9 GridHeader';
+        eventRowHeader.append(eventsColumnHeader);
+
+        var headerDate = schedule.start;
+
+        //Отрисовка шапки
+        for(var i = 0; i < daysDifference; i++){
+            //Колонка день
+            var timeZoneHeader = document.createElement('li');
+            timeZoneHeader.classList = 'headerDay text-center';
+            timeZoneHeader.innerText = moment(headerDate).format('DD.MM.YYYY');
+            eventsColumnHeader.append(timeZoneHeader);
+
+            headerDate = moment(headerDate).add('1', 'day');
+        }
+
+        return eventRowHeader;
+    }
     //-------------------------------------//
     
     //Добавляем события на основной элемент
@@ -522,8 +474,135 @@ function DrawSchedule(schedule)
         });
     });
 
+    //$(".EventDetail").mousedown(DragEvent(event));
+    function DragEvent(event, movedEvent) {
+        
+        console.log('event', event);
+        console.log('movedEvent', movedEvent);
+
+        //var movedEvent = this;
+        
+        oldEventParams = {
+            parent: $(movedEvent).parent('.day'),
+            style: $(movedEvent).attr('style')
+        };
+        console.log('oldEventParams', oldEventParams);
+
+        $(movedEvent).css('width', $(movedEvent).css('width'));
+        
+        let shiftX = event.clientX - movedEvent.getBoundingClientRect().left;
+        let shiftY = event.clientY - movedEvent.getBoundingClientRect().top;
+
+        movedEvent.style.position = 'absolute';
+        movedEvent.style.zIndex = 1000;
+        document.body.append(movedEvent);
+
+        moveAt(event.pageX, event.pageY);
+
+        // переносит мяч на координаты (pageX, pageY),
+        // дополнительно учитывая изначальный сдвиг относительно указателя мыши
+        function moveAt(pageX, pageY) {
+            movedEvent.style.left = pageX - (shiftX/2) + 'px';
+            movedEvent.style.top = pageY - (shiftY/2) + 'px';
+        }
+
+        let currentDroppable = null;
+
+        function onMouseMove(event) {
+            moveAt(event.pageX, event.pageY);
+
+            movedEvent.hidden = true;
+            let elemBelow = document.elementFromPoint(event.clientX, event.clientY);
+            movedEvent.hidden = false;
+
+            // событие mousemove может произойти и когда указатель за пределами окна
+            // (мяч перетащили за пределы экрана)
+
+            // если clientX/clientY за пределами окна, elementFromPoint вернёт null
+            if (!elemBelow) return;
+
+            // потенциальные цели переноса помечены классом droppable (может быть и другая логика)
+            let droppableBelow = elemBelow.closest('.day');
+
+            if (currentDroppable != droppableBelow) {
+                // мы либо залетаем на цель, либо улетаем из неё
+                // внимание: оба значения могут быть null
+                //   currentDroppable=null,
+                //     если мы были не над droppable до этого события (например, над пустым пространством)
+                //   droppableBelow=null,
+                //     если мы не над droppable именно сейчас, во время этого события
+
+                if (currentDroppable) {
+                // логика обработки процесса "вылета" из droppable (удаляем подсветку)
+                    //leaveDroppable(currentDroppable);
+
+                    $(currentDroppable).removeClass('DropablePoint');
+                }
+                currentDroppable = droppableBelow;
+                if (currentDroppable) {
+                // логика обработки процесса, когда мы "влетаем" в элемент droppable
+                    //enterDroppable(currentDroppable);
+                    $(currentDroppable).addClass('DropablePoint');
+
+                }
+            }
+        }
+
+        // передвигаем мяч при событии mousemove
+        document.addEventListener('mousemove', onMouseMove);
+
+        // отпустить мяч, удалить ненужные обработчики
+        $(movedEvent).on("mouseup", function() {
+            document.removeEventListener('mousemove', onMouseMove);
+            movedEvent.onmouseup = null;
+
+            if($(currentDroppable).hasClass('day')){
+                $(currentDroppable).append(movedEvent);
+                $(movedEvent).attr('style', oldEventParams.style);
+                
+                
+                var eventData = JSON.parse($(movedEvent).children('input[name="EventData"]').val());
+                var newLocationId = parseInt($(currentDroppable).children('input[name="LocationId"]').val());
+
+                var daysDiff = moment(moment(eventData.start).startOf('day').diff(moment($(currentDroppable).children('input[name="Date"]').val()))).day();
+
+                var newStartDate = moment($(currentDroppable).children('input[name="Date"]').val())
+                                        .hour(moment(eventData.start).hour())
+                                        .minute(moment(eventData.start).minute());
+                
+                var newEndDate = moment(eventData.end)
+                                        .add(daysDiff, 'day');;
+                
+                var eventInList = schedule.events.find(x=>x.id == eventData.id); 
+                var oldEventLocationId = eventInList.locationId;
+                eventInList.locationId = newLocationId;
+                eventInList.start = newStartDate;
+                eventInList.end = newEndDate;
+
+                //$('.LocationsContainer input[name="LocationId"][value="' + oldEventLocationId + '"]:first').parents('.LocationRow:first').replaceAll(GetLocationRow(oldEventLocationId));
+                //$('.LocationsContainer input[name="LocationId"][value="' + newLocationId + '"]:first').parents('.LocationRow:first').replaceAll(GetLocationRow(newLocationId));
+                console.log('new Schedule', schedule);
+
+                $('#container').html(DrawSchedule(schedule));
+            }else{
+                $(oldEventParams.parent).append(movedEvent);
+                $(movedEvent).attr('style', oldEventParams.style);
+            }
+
+            $(currentDroppable).removeClass('DropablePoint');
+            oldEventParams = null;
+        });
+
+        movedEvent.ondragstart = function() {
+            return false;
+        };
+    }
+
     return container;
 }
+
+
+
 
 //#endregion
 
@@ -562,6 +641,11 @@ function DrawContextMenu(contextContent){
 
     $('body').append(menuContainer);
 }
+
+
+
+
+
 </script>
 
 

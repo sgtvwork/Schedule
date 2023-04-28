@@ -22,7 +22,7 @@
     vertical-align: middle;
 }
 
-.day{
+.day, .headerDay{
     list-style-type: none;
     padding-left: 0;
     border: 0px solid black;
@@ -81,4 +81,21 @@
 
 .noBottomBorder{
     border-bottom: none;
+}
+
+.redBorder{
+    border: 1px solid red;
+}
+
+.blueBorder{
+    border: 1px solid blue;
+}
+
+.EventDetail p{
+    user-select: none;
+}
+
+.DropablePoint{
+    background-image: url('https://www.meme-arsenal.com/memes/13ef4ecb4e4cc76ecf441a6826511f2c.jpg');
+    background-position: center;background-size: cover;background-repeat: no-repeat;
 }
