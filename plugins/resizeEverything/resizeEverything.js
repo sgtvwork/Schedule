@@ -48,6 +48,7 @@
                 opt.instanceId = "rsz_" + new Date().getTime();            
 
             var startPos, startTransition;
+           
 
             // Current element to resize
             var $el = $(this);
@@ -59,6 +60,68 @@
             // Appending handlers to resizable events
             $($el).append('<div class="stickR"></div>')
             $($el).append('<div class="stickL"></div>')
+
+            // ----------------------------------------------------------------------
+            // ----------------------------------------------------------------------
+            var original_width = 0
+            var original_x = 0
+            var original_mouse_x = 0
+
+            // var resizerL = document.querySelector('.stickL')
+            var resizerL = getHandleLeft(null, $el)
+            var resizerR = getHandle(null, $el)
+
+            function mouseDown (e){
+                console.log('mouseDown')
+                whichHandle = e.target.className
+                e.preventDefault()
+                // original_width = parseFloat(getComputedStyle($el, null).getPropertyValue('width').replace('px', ''));
+                original_width = parseFloat($el.width());
+                // original_x = $el.getBoundingClientRect().left;
+                original_x = Number($($el).css('left').replace('px',''))
+                original_mouse_x = e.pageX;
+                // window.addEventListener('mousemove.' + opt.instanceId, resize)
+                // window.addEventListener('mouseup.' + opt.instanceId, stopResize)
+                $(document).on('mousemove.' + opt.instanceId, resize);
+                $(document).on('mouseup.' + opt.instanceId, stopResize);  
+            }
+
+            // resizerL.addEventListener('mousedown.' + opt.instanceId, mouseDown)
+            // resizerR.addEventListener('mousedown.' + opt.instanceId, mouseDown)
+            resizerL.on("mousedown." + opt.instanceId, mouseDown);
+            resizerR.on("mousedown." + opt.instanceId, mouseDown);
+
+            function resize (e){
+                console.log(e)
+                let dayWidth = $('.day').width()
+                let minWidth = dayWidth / options.eventMinWidth
+                
+                if (whichHandle.indexOf('stickL') !== -1) {
+                    const width = original_width - (e.pageX - original_mouse_x)
+                    if (width >= minWidth) {
+                        $el[0].style.width = width + 7 + 'px'
+                        $el[0].style.left = original_x + (e.pageX - original_mouse_x) + 'px'                        
+                    }
+                }
+                else if (whichHandle.indexOf('stickR') !== -1) {
+                    const width = original_width + (e.pageX - original_mouse_x);
+                    if (width >= minWidth) {
+                        $el[0].style.width = width + 'px'
+                    }                    
+                } 
+            }
+
+            function stopResize(e) {
+                console.log('stopresize')
+                e.stopPropagation();
+                e.preventDefault();
+                $(document).off('mousemove.' + opt.instanceId);
+                $(document).off('mouseup.' + opt.instanceId);
+                window.removeEventListener('mousemove.' + opt.instanceId, resize)
+            }
+
+            // ----------------------------------------------------------------------
+            // ----------------------------------------------------------------------
 
             if (options === 'destroy') {            
                 opt = $el.data('resizable');
@@ -89,13 +152,14 @@
             $handle     = getHandle(opt.handleSelector, $el);
             $handleLeft = getHandleLeft(opt.handleSelector, $el)
 
-            if (opt.touchActionNone)
+            if (opt.touchActionNone){              
                 $handle.css("touch-action", "none");
-            $handleLeft.css("touch-action", "none")
+                $handleLeft.css("touch-action", "none")
+            }
 
             $el.addClass("resizable");
-            $handle    .on("mousedown." + opt.instanceId + " touchstart." + opt.instanceId, startDragging);
-            $handleLeft.on("mousedown." + opt.instanceId + " left" + " touchstart." + opt.instanceId, startDragging);
+            // $handle    .on("mousedown." + opt.instanceId + " touchstart." + opt.instanceId, startDragging);
+            // $handleLeft.on("mousedown." + opt.instanceId + " left" + " touchstart." + opt.instanceId, startDragging);
 
             function noop(e) {
                 e.stopPropagation();
@@ -109,161 +173,159 @@
             var NEWX
             var DIFF_BTW_CURSOR_N_LEFT
 
-            function startDragging(e) {
-                // Prevent dragging a ghost image in HTML5 / Firefox and maybe others    
-                if ( e.preventDefault ) {
-                  e.preventDefault();
-                }
+            // function startDragging(e) {
+            //     // Prevent dragging a ghost image in HTML5 / Firefox and maybe others    
+            //     if ( e.preventDefault ) {
+            //       e.preventDefault();
+            //     }
                 
-                if (e.target.className === 'stickR') {
-                    whichHandle = 'r'
-                }
-                else if (e.target.className === 'stickL') {
-                    whichHandle = 'l'
-                }
+            //     if (e.target.className === 'stickR') {
+            //         whichHandle = 'r'
+            //     }
+            //     else if (e.target.className === 'stickL') {
+            //         whichHandle = 'l'
+            //     }
 
-                startPos = getMousePos(e);
-                startPos.width = parseInt($el.width(), 10);
-                startPos.height = parseInt($el.height(), 10);
+            //     startPos = getMousePos(e);
+            //     startPos.width = parseInt($el.width(), 10);
+            //     startPos.height = parseInt($el.height(), 10);
 
-                OLDWIDTH = startPos.width
-                OLDX = startPos.x
-                DIFF_BTW_CURSOR_N_LEFT = OLDX - Number($($el).css('left').slice(0,-2))
+            //     OLDWIDTH = startPos.width
+            //     OLDX = startPos.x
+            //     DIFF_BTW_CURSOR_N_LEFT = OLDX - Number($($el).css('left').slice(0,-2))
 
-                startTransition = $el.css("transition");
-                $el.css("transition", "none");
+            //     startTransition = $el.css("transition");
+            //     $el.css("transition", "none");
 
-                if (opt.onDragStart) {
-                    if (opt.onDragStart(e, $el, opt) === false)
-                        return;
-                }
+            //     if (opt.onDragStart) {
+            //         if (opt.onDragStart(e, $el, opt) === false)
+            //             return;
+            //     }
                 
-                $(document).on('mousemove.' + opt.instanceId, doDrag);
-                $(document).on('mouseup.' + opt.instanceId, stopDragging);           
-                if (window.Touch || navigator.maxTouchPoints) {
-                    $(document).on('touchmove.' + opt.instanceId, doDrag);
-                    $(document).on('touchend.' + opt.instanceId, stopDragging);
-                }
-                $(document).on('selectstart.' + opt.instanceId, noop); // disable selection
-                $("iframe").css("pointer-events","none");
-            }
+            //     $(document).on('mousemove.' + opt.instanceId, doDrag);
+            //     $(document).on('mouseup.' + opt.instanceId, stopDragging);           
+            //     if (window.Touch || navigator.maxTouchPoints) {
+            //         $(document).on('touchmove.' + opt.instanceId, doDrag);
+            //         $(document).on('touchend.' + opt.instanceId, stopDragging);
+            //     }
+            //     $(document).on('selectstart.' + opt.instanceId, noop); // disable selection
+            //     $("iframe").css("pointer-events","none");
+            // }
 
-            function doDrag(e) { 
-                let pos = getMousePos(e)
+            // function doDrag(e) { 
+            //     let pos = getMousePos(e)
 
-                let dayWidth = $('.day').width()
-                let minWidth = dayWidth / options.eventMinWidth
+            //     let dayWidth = $('.day').width()
+            //     let minWidth = dayWidth / options.eventMinWidth
 
-                let eventWidthPx = $($el).width()
-                let elParent = $($el).parent()
-                let parentWidthPx = $(elParent).width()
-                let eventWidthPrc = parentWidthPx / eventWidthPx * 100
-                let parentOfParent = $(elParent).parent()
-                let dayscount = $(parentOfParent).children()
-                let childNumber = $(elParent).attr('childnumber')
+            //     let eventWidthPx = $($el).width()
+            //     let elParent = $($el).parent()
+            //     let parentWidthPx = $(elParent).width()
+            //     let eventWidthPrc = parentWidthPx / eventWidthPx * 100
+            //     let parentOfParent = $(elParent).parent()
+            //     let dayscount = $(parentOfParent).children()
+            //     let childNumber = $(elParent).attr('childnumber')
                 
-                let hz = 0
-                for (let index = 1; index < childNumber; index++) {
-                   hz++
-                }
+            //     let hz = 0
+            //     for (let index = 1; index < childNumber; index++) {
+            //        hz++
+            //     }
 
-                let commonw = dayWidth * 6                
-                let leftBorder = hz * dayWidth                
-                let ll = Number($($el).css('left').slice(0,-2))
-                let leftRange = eventWidthPx + leftBorder + ll
-                let rightRange = (commonw - leftBorder - ll)
-                console.log(eventWidthPx)
-                console.log(commonw)
-                // console.log(commonw)
-                // console.log(leftBorder)
-                // console.log(ll)
-                // console.log(eventWidthPx)
-                // console.log(commonw - leftBorder - ll - eventWidthPx)
+            //     let commonw = dayWidth * 6                
+            //     let leftBorder = hz * dayWidth                
+            //     let ll = Number($($el).css('left').slice(0,-2))
+            //     let leftRange = eventWidthPx + leftBorder + ll
+            //     let rightRange = (commonw - leftBorder - ll)
+            //     console.log(eventWidthPx)
+            //     console.log(commonw)
+            //     // console.log(commonw)
+            //     // console.log(leftBorder)
+            //     // console.log(ll)
+            //     // console.log(eventWidthPx)
+            //     // console.log(commonw - leftBorder - ll - eventWidthPx)
 
 
 
-                if (whichHandle === 'r') {
-                    if (opt.resizeWidthFrom === 'left')
-                        newWidth = startPos.width - pos.x + startPos.x;
-                    else{
-                        newWidth = startPos.width + pos.x - startPos.x;
-                    }
+            //     if (whichHandle === 'r') {
+            //         if (opt.resizeWidthFrom === 'left')
+            //             newWidth = startPos.width - pos.x + startPos.x;
+            //         else{
+            //             newWidth = startPos.width + pos.x - startPos.x;
+            //         }
 
-                    if (opt.resizeHeightFrom === 'top')
-                        newHeight = startPos.height - pos.y + startPos.y;
-                    else
-                        newHeight = startPos.height + pos.y - startPos.y;
+            //         if (opt.resizeHeightFrom === 'top')
+            //             newHeight = startPos.height - pos.y + startPos.y;
+            //         else
+            //             newHeight = startPos.height + pos.y - startPos.y;
 
-                    if (!opt.onDrag || opt.onDrag(e, $el, newWidth, newHeight, opt) !== false) {
-                        if (opt.resizeHeight)
-                            $el.height(newHeight); 
+            //         if (!opt.onDrag || opt.onDrag(e, $el, newWidth, newHeight, opt) !== false) {
+            //             if (opt.resizeHeight)
+            //                 $el.height(newHeight); 
 
-                        if (newWidth >= minWidth) {
-                            if (opt.resizeWidth){
-                                if (newWidth <= rightRange) {
-                                    // console.log(newWidth)
-                                    // console.log(rightRange)
-                                    $el.width(newWidth);  
-                                }                                  
-                            }
-                        }                                        
-                    }   
-                }
-                else if (whichHandle === 'l') {
-                    let differenceBetweenCursors = e.clientX - OLDX
-                    NEWX = e.clientX   
+            //             if (newWidth >= minWidth) {
+            //                 if (opt.resizeWidth){
+            //                     if (newWidth <= rightRange) {
+            //                         $el.width(newWidth);  
+            //                     }                                  
+            //                 }
+            //             }                                        
+            //         }   
+            //     }
+            //     else if (whichHandle === 'l') {
+            //         let differenceBetweenCursors = e.pageX - OLDX
+            //         NEWX = e.pageX   
 
-                    // разница больше 0, значит тянем вправо, уменьшая событие
-                    if (differenceBetweenCursors > 0) {
-                        NEWWIDTH = OLDWIDTH - (NEWX - OLDX)
+            //         // разница больше 0, значит тянем вправо, уменьшая событие
+            //         if (differenceBetweenCursors > 0) {
+            //             NEWWIDTH = OLDWIDTH - (NEWX - OLDX)
 
-                        if (NEWWIDTH >= minWidth){
-                            $($el).css('left', NEWX - DIFF_BTW_CURSOR_N_LEFT + 'px').css('width', NEWWIDTH + 'px')
-                        }  
-                    }
-                    //тянем влево, увеличивая событие
-                    else if (differenceBetweenCursors < 0){
-                        NEWWIDTH = OLDWIDTH + (OLDX - NEWX)
+            //             if (NEWWIDTH >= minWidth){
+            //                 $($el).css('left', NEWX - DIFF_BTW_CURSOR_N_LEFT + 'px').css('width', NEWWIDTH + 'px')
+            //             }  
+            //         }
+            //         //тянем влево, увеличивая событие
+            //         else if (differenceBetweenCursors < 0){
+            //             NEWWIDTH = OLDWIDTH + (OLDX - NEWX)
                         
-                        if (NEWWIDTH >= minWidth){
-                            if (NEWWIDTH <= leftRange) {
-                                $($el).css('left', NEWX - DIFF_BTW_CURSOR_N_LEFT + 'px').css('width', NEWWIDTH + 'px')
-                            }                            
-                        }  
-                    }                  
-                }
-            }
+            //             if (NEWWIDTH >= minWidth){
+            //                 if (NEWWIDTH <= leftRange) {
+            //                     $($el).css('left', NEWX - DIFF_BTW_CURSOR_N_LEFT + 'px').css('width', NEWWIDTH + 'px')
+            //                 }                            
+            //             }  
+            //         }                  
+            //     }
+            // }
 
-            function stopDragging(e) {
-                e.stopPropagation();
-                e.preventDefault();
+            // function stopDragging(e) {
+            //     e.stopPropagation();
+            //     e.preventDefault();
 
-                $(document).off('mousemove.' + opt.instanceId);
-                $(document).off('mouseup.' + opt.instanceId);
+            //     $(document).off('mousemove.' + opt.instanceId);
+            //     $(document).off('mouseup.' + opt.instanceId);
 
-                if (window.Touch || navigator.maxTouchPoints) {
-                    $(document).off('touchmove.' + opt.instanceId);
-                    $(document).off('touchend.' + opt.instanceId);
-                }
-                $(document).off('selectstart.' + opt.instanceId, noop);                
+            //     if (window.Touch || navigator.maxTouchPoints) {
+            //         $(document).off('touchmove.' + opt.instanceId);
+            //         $(document).off('touchend.' + opt.instanceId);
+            //     }
+            //     $(document).off('selectstart.' + opt.instanceId, noop);                
 
-                // reset changed values
-                $el.css("transition", startTransition);
-                $("iframe").css("pointer-events","auto");
+            //     // reset changed values
+            //     $el.css("transition", startTransition);
+            //     $("iframe").css("pointer-events","auto");
 
-                if (opt.onDragEnd)
-                    opt.onDragEnd(e, $el, opt);
+            //     if (opt.onDragEnd)
+            //         opt.onDragEnd(e, $el, opt);
 
-                return false;
-            }
+            //     return false;
+            // }
 
             function getMousePos(e) {
                 var pos = { x: 0, y: 0, width: 0, height: 0 };
-                if (typeof e.clientX === "number") {
-                    pos.x = e.clientX;
+                if (typeof e.pageX === "number") {
+                    pos.x = e.pageX;
                     pos.y = e.clientY;
                 } else if (e.originalEvent.touches) {
-                    pos.x = e.originalEvent.touches[0].clientX;
+                    pos.x = e.originalEvent.touches[0].pageX;
                     pos.y = e.originalEvent.touches[0].clientY;
                 } else
                     return null;
