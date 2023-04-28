@@ -47,6 +47,7 @@
     height: 3rem;
     padding-left: 0.5rem;
     z-index: 1;
+    border-radius: 5px;
 }
 
 .EventDetail:hover{

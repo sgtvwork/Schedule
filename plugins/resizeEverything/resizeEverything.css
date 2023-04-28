@@ -8,10 +8,10 @@
 }  
 
 .stickL{  
-  left: -4px;
+  left: 0px;
   border-radius: 5px 0 0 5px;
 } 
 .stickR{
-  right: -4px;  
+  right: 0px;  
   border-radius: 0 5px 5px 0;
 }

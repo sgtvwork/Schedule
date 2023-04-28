@@ -56,7 +56,7 @@
             var $handle;
             var $handleLeft;
             // Shows current handler
-            var whichHandle = 'r'
+            var whichHandle = ''
             // Appending handlers to resizable events
             $($el).append('<div class="stickR"></div>')
             $($el).append('<div class="stickL"></div>')
@@ -67,45 +67,51 @@
             var original_x = 0
             var original_mouse_x = 0
 
-            // var resizerL = document.querySelector('.stickL')
             var resizerL = getHandleLeft(null, $el)
             var resizerR = getHandle(null, $el)
 
             function mouseDown (e){
-                console.log('mouseDown')
                 whichHandle = e.target.className
                 e.preventDefault()
-                // original_width = parseFloat(getComputedStyle($el, null).getPropertyValue('width').replace('px', ''));
                 original_width = parseFloat($el.width());
-                // original_x = $el.getBoundingClientRect().left;
                 original_x = Number($($el).css('left').replace('px',''))
                 original_mouse_x = e.pageX;
-                // window.addEventListener('mousemove.' + opt.instanceId, resize)
-                // window.addEventListener('mouseup.' + opt.instanceId, stopResize)
                 $(document).on('mousemove.' + opt.instanceId, resize);
                 $(document).on('mouseup.' + opt.instanceId, stopResize);  
             }
 
-            // resizerL.addEventListener('mousedown.' + opt.instanceId, mouseDown)
-            // resizerR.addEventListener('mousedown.' + opt.instanceId, mouseDown)
             resizerL.on("mousedown." + opt.instanceId, mouseDown);
             resizerR.on("mousedown." + opt.instanceId, mouseDown);
 
             function resize (e){
-                console.log(e)
                 let dayWidth = $('.day').width()
                 let minWidth = dayWidth / options.eventMinWidth
+
+                let elParent = $($el).parent()
+                let parentOfParent = $(elParent).parent()
+                let daysNumber = $(parentOfParent).children()
+                let childNumber = $(elParent).attr('childnumber')
+                
+                let fullDaysBeforeEvent = 0
+                for (let index = 1; index < childNumber; index++) {
+                    fullDaysBeforeEvent++
+                }
+
+                let commonwidth = dayWidth * daysNumber.length             
+                let leftBorder = fullDaysBeforeEvent * dayWidth                
+                let leftRange = original_width + leftBorder + original_x 
+                let rightRange = (commonwidth - leftBorder - original_x) 
                 
                 if (whichHandle.indexOf('stickL') !== -1) {
                     const width = original_width - (e.pageX - original_mouse_x)
-                    if (width >= minWidth) {
-                        $el[0].style.width = width + 7 + 'px'
+                    if (width >= minWidth && width <= leftRange) {
+                        $el[0].style.width = width + 8 + 'px'
                         $el[0].style.left = original_x + (e.pageX - original_mouse_x) + 'px'                        
                     }
                 }
                 else if (whichHandle.indexOf('stickR') !== -1) {
                     const width = original_width + (e.pageX - original_mouse_x);
-                    if (width >= minWidth) {
+                    if (width >= minWidth && width <= rightRange) {
                         $el[0].style.width = width + 'px'
                     }                    
                 } 
