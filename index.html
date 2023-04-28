@@ -212,7 +212,7 @@ $(document).ready(()=>{
     $('#container').html(DrawSchedule(schedule));
 
     //Включение ресайза после отрисовки
-    $(".EventDetail").resizable({
+    $(".EventDetailContainer").resizable({
         resizeWidth: true,
         resizeHeight: false,
         onDragStart: null,      // hook into start drag operation (event,$el,opt passed - return false to abort drag)           
@@ -233,7 +233,9 @@ $(document).ready(()=>{
     
     
 });
+class Scheduler{
 
+}
 //Отрисовывает шахматку и возвращает как html объект
 function DrawSchedule(schedule)
 {
@@ -351,6 +353,10 @@ function DrawSchedule(schedule)
                     var top = alreadyPushedEvents.filter(x=>x.locationId == currEvent.locationId && x.start < currEvent.end && x.end > currEvent.start).length;
 
                     //Контейнер детали мероприятия (полоска)
+                    var eventProgressContainer = document.createElement('div');
+                    eventProgressContainer.classList = 'EventDetailContainer ' + currEvent.extClass;
+                    
+                    //Контейнер детали мероприятия (полоска)
                     var eventProgress = document.createElement('div');
                     eventProgress.classList = 'EventDetail ' + currEvent.extClass;
                     eventProgress.setAttribute('data-bs-toggle','tooltip');
@@ -360,31 +366,33 @@ function DrawSchedule(schedule)
                             DragEvent(event, eventProgress);
                         }
                     );
+                    eventProgressContainer.append(eventProgress);
+                    
 
                     //Расчет длины события (не лезь сюда, оно тебя сожрет) 
                     if(currEvent.start >= schedule.start && currEvent.end <= schedule.end)
                     {
-                        eventProgress.style.width = (currEvent.end.diff(currEvent.start, 'day', true) * 100) + '%';
-                        eventProgress.style.left = (currEvent.start.diff(date.startOf('day'), 'day', true) * 100) + '%';
+                        eventProgressContainer.style.width = (currEvent.end.diff(currEvent.start, 'day', true) * 100) + '%';
+                        eventProgressContainer.style.left = (currEvent.start.diff(date.startOf('day'), 'day', true) * 100) + '%';
                     }
                     else if(currEvent.start < schedule.start && currEvent.end > schedule.end)
                     {
-                        eventProgress.style.width = (schedule.end.diff(schedule.start.startOf('day'), 'day', true) * 100) + '%';
-                        eventProgress.style.left = '0%';
+                        eventProgressContainer.style.width = (schedule.end.diff(schedule.start.startOf('day'), 'day', true) * 100) + '%';
+                        eventProgressContainer.style.left = '0%';
                     }
                     else if(currEvent.start >= schedule.start )
                     {
-                        eventProgress.style.width = (schedule.end.diff(currEvent.start, 'day', true) * 100) + '%';
-                        eventProgress.style.left = (currEvent.start.diff(date.startOf('day'), 'day', true) * 100) + '%';
+                        eventProgressContainer.style.width = (schedule.end.diff(currEvent.start, 'day', true) * 100) + '%';
+                        eventProgressContainer.style.left = (currEvent.start.diff(date.startOf('day'), 'day', true) * 100) + '%';
                     }
                     else
                     {
-                        eventProgress.style.width = (currEvent.end.diff(schedule.start, 'day', true) * 100) + '%';
-                        eventProgress.style.left = '0%';
+                        eventProgressContainer.style.width = (currEvent.end.diff(schedule.start, 'day', true) * 100) + '%';
+                        eventProgressContainer.style.left = '0%';
                     }
 
-                    eventProgress.style.top = (top * 3.1 + 0.1) + 'rem';
-                    timeZone.append(eventProgress);
+                    eventProgressContainer.style.top = (top * 3.1 + 0.1) + 'rem';
+                    timeZone.append(eventProgressContainer);
 
                     top++;
 
@@ -474,7 +482,7 @@ function DrawSchedule(schedule)
         });
     });
 
-    //$(".EventDetail").mousedown(DragEvent(event));
+    //$(".EventDetailContainer").mousedown(DragEvent(event));
     function DragEvent(event, movedEvent) {
         
         console.log('event', event);

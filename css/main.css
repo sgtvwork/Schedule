@@ -33,25 +33,32 @@
 }
 
 .DaysContainer{
-    padding: 0;
-    
+    padding: 0;    
 }
 
 .DaysContainer .day:nth-child(even){
     background-color: #F5F5F5;
 }
 
-.EventDetail{
+.EventDetailContainer{
     position: absolute;
+    z-index: 1;
+}
+
+.EventDetail{    
     background-color: #6495ED;
     height: 3rem;
     padding-left: 0.5rem;
-    z-index: 1;
     border-radius: 5px;
+    width: 100%;
 }
 
 .EventDetail:hover{
     background-color: #6495ED50;
+}
+
+.EventDetail p{
+    user-select: none;
 }
 
 .daysContextMenu{
@@ -89,10 +96,6 @@
 
 .blueBorder{
     border: 1px solid blue;
-}
-
-.EventDetail p{
-    user-select: none;
 }
 
 .DropablePoint{
