@@ -178,10 +178,13 @@
     //События при нажатии кнопок мыши по сетке
     var scheduleEvents = {
         //Левый клик
-        lClick: function(){
+        lClick: function (e) {
             $('.redBorder').removeClass('redBorder');
             $('.blueBorder').removeClass('blueBorder');
-            $(this).addClass('redBorder');
+            // $(this).addClass('redBorder');
+            if (e.target.className === 'day') {
+                addNewEvent(e)
+            }
         }
         //Правый клик
         , rClick: function(){
@@ -201,6 +204,80 @@
         events: events,
         scheduleEvents: scheduleEvents
     }
+
+    function addNewEvent(e) {
+        console.log(e)
+        let target = e.target.closest('.day')
+        let ghostEvent = createEventDiv(e)
+
+        $(target).append(ghostEvent)
+        console.log('event created')
+        
+        //пока отключил
+        //$(document).on('mousemove', rendering)
+        //$(document).on('mouseup', renderStop)
+
+        function rendering(e){        
+            console.log('rendering')
+            let wdth = $(ghostEvent).width()
+            $(ghostEvent).css('width', wdth + 1 + 'px')
+        }
+        function renderStop(e){
+            console.log('render stop')
+            e.stopPropagation();
+            e.preventDefault();
+            $(document).off('mousemove', rendering);
+            $(document).off('mouseup', renderStop);
+        }
+    }
+
+function createEventDiv (e) {
+    let target = e.target.closest('.day')
+    let start_x = e.pageX - target.getBoundingClientRect().left
+    
+    let ghostEvent = $('<div>', {
+        class: 'EventDetailContainer ',
+    }).css({
+        left: start_x +'px', 
+        top: 0.1 +'rem' ,
+        width: 50 + 'px'
+    });
+
+    let eventInner = $('<div>', {
+        class: 'EventDetail'
+    }).attr('data-bs-toggle', 'tooltip')
+    .attr('data-bs-original-title', 'Новое событие')
+    
+    let innerText = $('<p>', {
+        class: 'm-0 p-0 overflow-hidden text-nowrap fw-bold fs-6'
+    }).html('Новое мероприятие')
+
+    
+    // let closeButton = document.createElement('a')
+    //                 $(closeButton).html('x')
+    //                 $(closeButton).attr('href', '#')
+    //                     .attr('onclick', 'deleteNewEvent(this)')
+    //                 $(closeButton).css('text-decoration', 'none')
+    //                     .css('color', 'white')
+    //                     .css('position', 'absolute')
+    //                     .css('top', '0px')
+    //                     .css('right', '5px')
+
+    $(eventInner).append(innerText)//.append(closeButton)
+
+    $(ghostEvent).resizable({
+        resizeWidth: true,
+        resizeHeight: false,
+        onDragStart: null,             
+        onDragEnd: null,            
+        onDrag: null,           
+        eventMinWidth: 4
+    });
+    
+    $(ghostEvent).append(eventInner)
+
+    return ghostEvent
+}
 
     //#endregion scheduleParam
 
