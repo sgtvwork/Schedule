@@ -5,6 +5,7 @@ function DrawSchedule(schedule)
 
     //При перетаскивании элемента хранит данные о старом месте
     var oldEventParams;
+    var movedEventDuplicate;
      
     //Главный блок 
     var container = document.createElement('div');
@@ -65,6 +66,7 @@ function DrawSchedule(schedule)
             timeZone.addEventListener('click', schedule.scheduleEvents.lClick);
             timeZone.addEventListener('contextmenu', schedule.scheduleEvents.rClick);
             timeZone.style = 'min-height: 3.2rem;';
+            movedEventDuplicate
             eventsColumn.append(timeZone);
             
             var dateInfo = document.createElement('input');
@@ -110,17 +112,17 @@ function DrawSchedule(schedule)
                     //Контейнер детали мероприятия (полоска)
                     var eventProgress = document.createElement('div');
                     eventProgress.classList = 'EventDetail ' + currEvent.extClass;
-                    eventProgress.style.zIndex = 1000 - top;
                     eventProgress.setAttribute('data-bs-toggle','tooltip');
                     eventProgress.setAttribute('title', currEvent.name + ' \r\n' + currEvent.start.format('DD.MM.YYYY HH:mm') + ' - ' + currEvent.end.format('DD.MM.YYYY HH:mm'));
-                    $(eventProgress).mousedown(
-                        (event)=>{
-                            DragEvent(event, eventProgress);
+                    eventProgress.addEventListener(
+                        'mousedown',
+                        (e) => {
+                            DragEvent(currEvent, eventProgress, e);
                         }
                     );
+
                     eventProgressContainer.append(eventProgress);
                     
-
                     //Расчет длины события (не лезь сюда, оно тебя сожрет) 
                     if(currEvent.start >= schedule.start && currEvent.end <= schedule.end)
                     {
@@ -150,7 +152,6 @@ function DrawSchedule(schedule)
 
                     //Увеличиваем "родителя"
                     timeZone.style = 'min-height: ' + (top * 3.1 + 0.1) + 'rem;';
-
                     //Название мероприятия
                     var eventName = document.createElement('p');
                     eventName.classList = 'm-0 p-0 overflow-hidden text-nowrap fw-bold fs-6';
@@ -167,7 +168,7 @@ function DrawSchedule(schedule)
                     var eventId = document.createElement('input');
                     eventId.type = 'hidden';
                     eventId.name = 'EventData';
-                    eventId.value = JSON.stringify(currEvent);//JSON.parse('{"a":1,"b":2}'); 
+                    eventId.value = JSON.stringify(currEvent);
                     eventProgress.append(eventId);
 
                     //Добавляем в отрисованные
@@ -180,6 +181,10 @@ function DrawSchedule(schedule)
 
         //#endregion
     }
+
+    document.body.addEventListener("mouseup", () => {
+        dragging = false;
+    });
 
     function GetScheduleHeader(daysDifference){
 
@@ -220,19 +225,50 @@ function DrawSchedule(schedule)
         return eventRowHeader;
     }
     
-    function DragEvent(event, movedEvent) {
+    let startX = 0;
+    let startY = 0;
+    let dragging = false;
+    //const element = document.querySelector('.element')
+
+    function DragEvent(event, movedEvent, bowserEvent) {
         
         console.log('event', event);
         console.log('movedEvent', movedEvent);
 
-        //var movedEvent = this;
-        
+        dragging = true;
+        const style = window.getComputedStyle(movedEvent);
+        const transform = new DOMMatrixReadOnly(style.transform);
+        const translateX = transform.m41;
+        const translateY = transform.m42;
+        startX = bowserEvent.pageX - translateX;
+        startY = bowserEvent.pageY - translateY;
+
+        document.body.addEventListener('mousemove', (e) => {
+            
+            if (!dragging){
+                document.body.removeEventListener('mousemove', e, false);
+                console.log('removeEventListener');
+
+                return;
+            } 
+          
+            const x = event.pageX - startX;
+            const y = event.pageY - startY;
+          
+            // В этот раз мы можем объединить обновлённые координаты
+            // в одну запись translate, которую потом
+            // присвоим в качестве значения свойству transform.
+            movedEvent.style.transform = `translate(${x}px, ${y}px)`
+        }, false);
+
+        return;
+
+
         oldEventParams = {
             parent: $(movedEvent).parent('.day'),
             style: $(movedEvent).attr('style')
         };
-        console.log('oldEventParams', oldEventParams);
-
+        
         $(movedEvent).css('width', $(movedEvent).css('width'));
         
         let shiftX = event.clientX - movedEvent.getBoundingClientRect().left;
