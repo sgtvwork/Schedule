@@ -4,7 +4,7 @@ function DrawSchedule(schedule)
     console.log('schedule', schedule);
 
     //При перетаскивании элемента хранит данные о старом месте
-    var oldEventParams;
+    
     var movedEventDuplicate;
      
     //Главный блок 
@@ -177,6 +177,11 @@ function DrawSchedule(schedule)
         //#endregion
     }
 
+    function RedrawRow(locationId){
+        var $currentRow = $('input[name="LocationId"][value="' + locationId + '"]:first', scheduleContainer).parents('.LocationRow');
+        $currentRow.replaceWith(GetLocationRow(locationId));
+    }
+
     function GetScheduleHeader(daysDifference){
 
         //Строка шапки
@@ -223,7 +228,8 @@ function DrawSchedule(schedule)
         
         let days = scheduleContainer.querySelectorAll('.day'); 
         var currentDroppable;
-        
+        var oldEventParams;
+
         days.forEach(function(day){
 
             let eventDetails = day.querySelectorAll('.EventDetail'); 
@@ -237,17 +243,17 @@ function DrawSchedule(schedule)
                     });
                     $('.tooltip').hide();
 
-                    eventDetail.classList.add('movedEvent');
                     
                     var draggingElement = $(this);
-                    var xPositionDifference = draggingElement.offset().left - e.pageX;
-                    var yPositionDifference = draggingElement.offset().top - e.pageY;
-                    isDragging = true;                    
+                    
+                    isDragging = true; 
+                    
                     oldEventParams = {
                         parent: $(draggingElement).parent('.day'),
                         style: $(draggingElement).parents('.EventDetailContainer:first').attr('style')
                     };
-
+                    console.log('oldEventParams', oldEventParams);
+                    $(draggingElement).addClass('movedEvent');
                     $(draggingElement).parents('.day:first').addClass('OldDropablePoint');
                     $(draggingElement).parents('.EventDetailContainer:first').css('width', $(draggingElement).parents('.EventDetailContainer:first').css('width'));
                     
@@ -286,35 +292,34 @@ function DrawSchedule(schedule)
                     if(draggingElement == undefined){
                         return;
                     }
-
-                    isDragging = false;
+                    console.log('2 oldEventParams', oldEventParams);
 
                     $(draggingElement).parents('.EventDetailContainer:first').attr('style', oldEventParams.style);
+                    
+                    isDragging = false;
+                    //oldEventParams = null;
 
                     $('.OldDropablePoint').removeClass('OldDropablePoint');
                     $('.DropablePoint').removeClass('DropablePoint');
                     $('.movedEvent').removeClass('movedEvent');
 
                     document.removeEventListener('mousemove',function(e){}); 
-                    $(currentDroppable).unbind('mousemove');
+                    //$(currentDroppable).unbind('mousemove');
 
                     [].slice.call(scheduleContainer.querySelectorAll('[data-bs-toggle="tooltip"]')).map(function (tooltipTriggerEl) {
                         new bootstrap.Tooltip(tooltipTriggerEl).enable();
                     });
-
+                    
+                    var newLocationId = $(draggingElement).parents('.day:first').find('input[name="LocationId"]').val();
+                    var prevLocationId = $(oldEventParams.parent).find('input[name="LocationId"]').val();
+                    
+                    
+                    console.log('newLocationId', newLocationId)
+                    console.log('prevLocationId', prevLocationId)
+                    // RedrawRow(prevLocationId);
+                    // RedrawRow(newLocationId);
                 });
 
-                // //Add mouseover event listener to days 
-                // day.addEventListener('mouseover',function(){ 
-                //     //Add DropablePoint class to this element 
-                //     day.classList.add('DropablePoint'); 
-                // }); 
-
-                // //Add mouseout event listener to days 
-                // day.addEventListener('mouseout',function(){ 
-                //     //Remove DropablePoint class from this element 
-                //     day.classList.remove('DropablePoint'); 
-                // }); 
             }); 
         }); 
     }
