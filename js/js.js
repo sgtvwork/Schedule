@@ -8,17 +8,17 @@ function DrawSchedule(schedule)
     var movedEventDuplicate;
      
     //Главный блок 
-    var container = document.createElement('div');
-    container.classList = 'p-0 ScheduleContainer';
-    $(container).on('contextmenu', function() {return false;});
+    var scheduleContainer = document.createElement('div');
+    scheduleContainer.classList = 'p-0 ScheduleContainer';
+    $(scheduleContainer).on('contextmenu', function() {return false;});
     var daysDifference = schedule.end.diff(schedule.start, 'days') + 1; 
     
     //Отрисовка шапки
-    container.append(GetScheduleHeader(daysDifference));
+    scheduleContainer.append(GetScheduleHeader(daysDifference));
     
     //Отрисовка помещений и событий
     for(var l = 0; l < schedule.locations.length; l++){
-        GetLocationRow(schedule.locations[l].id);
+        scheduleContainer.append(GetLocationRow(schedule.locations[l].id));
     }
 
     function GetLocationRow(locationId){            
@@ -29,7 +29,6 @@ function DrawSchedule(schedule)
         //Строка помещения
         var eventRow = document.createElement('div');
         eventRow.classList = 'row LocationRow';
-        container.append(eventRow);
 
         //Помещение
         var locationDiv = document.createElement('div');
@@ -114,13 +113,7 @@ function DrawSchedule(schedule)
                     eventProgress.classList = 'EventDetail ' + currEvent.extClass;
                     eventProgress.setAttribute('data-bs-toggle','tooltip');
                     eventProgress.setAttribute('title', currEvent.name + ' \r\n' + currEvent.start.format('DD.MM.YYYY HH:mm') + ' - ' + currEvent.end.format('DD.MM.YYYY HH:mm'));
-                    eventProgress.addEventListener(
-                        'mousedown',
-                        (e) => {
-                            DragEvent(currEvent, eventProgress, e);
-                        }
-                    );
-
+                   
                     eventProgressContainer.append(eventProgress);
                     
                     //Расчет длины события (не лезь сюда, оно тебя сожрет) 
@@ -179,12 +172,10 @@ function DrawSchedule(schedule)
             date = moment(date).add('1', 'day');
         }
 
+        return eventRow;
+
         //#endregion
     }
-
-    document.body.addEventListener("mouseup", () => {
-        dragging = false;
-    });
 
     function GetScheduleHeader(daysDifference){
 
@@ -225,158 +216,107 @@ function DrawSchedule(schedule)
         return eventRowHeader;
     }
     
-    let startX = 0;
-    let startY = 0;
-    let dragging = false;
-    //const element = document.querySelector('.element')
 
-    function DragEvent(event, movedEvent, bowserEvent) {
+    dragElement(scheduleContainer);
+    
+    function dragElement(scheduleContainer){ 
         
-        console.log('event', event);
-        console.log('movedEvent', movedEvent);
-
-        dragging = true;
-        const style = window.getComputedStyle(movedEvent);
-        const transform = new DOMMatrixReadOnly(style.transform);
-        const translateX = transform.m41;
-        const translateY = transform.m42;
-        startX = bowserEvent.pageX - translateX;
-        startY = bowserEvent.pageY - translateY;
-
-        document.body.addEventListener('mousemove', (e) => {
-            
-            if (!dragging){
-                document.body.removeEventListener('mousemove', e, false);
-                console.log('removeEventListener');
-
-                return;
-            } 
-          
-            const x = event.pageX - startX;
-            const y = event.pageY - startY;
-          
-            // В этот раз мы можем объединить обновлённые координаты
-            // в одну запись translate, которую потом
-            // присвоим в качестве значения свойству transform.
-            movedEvent.style.transform = `translate(${x}px, ${y}px)`
-        }, false);
-
-        return;
-
-
-        oldEventParams = {
-            parent: $(movedEvent).parent('.day'),
-            style: $(movedEvent).attr('style')
-        };
+        let days = scheduleContainer.querySelectorAll('.day'); 
+        var currentDroppable;
         
-        $(movedEvent).css('width', $(movedEvent).css('width'));
-        
-        let shiftX = event.clientX - movedEvent.getBoundingClientRect().left;
-        let shiftY = event.clientY - movedEvent.getBoundingClientRect().top;
+        days.forEach(function(day){
 
-        movedEvent.style.position = 'absolute';
-        movedEvent.style.zIndex = 1000;
-        document.body.append(movedEvent);
+            let eventDetails = day.querySelectorAll('.EventDetail'); 
 
-        moveAt(event.pageX, event.pageY);
+            eventDetails.forEach(function(eventDetail){ 
 
-        // переносит мяч на координаты (pageX, pageY),
-        // дополнительно учитывая изначальный сдвиг относительно указателя мыши
-        function moveAt(pageX, pageY) {
-            movedEvent.style.left = pageX - (shiftX - 5) + 'px';
-            movedEvent.style.top = pageY - (shiftY - 5) + 'px';
-        }
+                eventDetail.addEventListener('mousedown', function(e){ 
+                    
+                    [].slice.call(scheduleContainer.querySelectorAll('[data-bs-toggle="tooltip"]')).map(function (tooltipTriggerEl) {
+                        new bootstrap.Tooltip(tooltipTriggerEl).disable();
+                    });
+                    $('.tooltip').hide();
 
-        let currentDroppable = null;
+                    eventDetail.classList.add('movedEvent');
+                    
+                    var draggingElement = $(this);
+                    var xPositionDifference = draggingElement.offset().left - e.pageX;
+                    var yPositionDifference = draggingElement.offset().top - e.pageY;
+                    isDragging = true;                    
+                    oldEventParams = {
+                        parent: $(draggingElement).parent('.day'),
+                        style: $(draggingElement).parents('.EventDetailContainer:first').attr('style')
+                    };
 
-        function onMouseMove(event) {
-            moveAt(event.pageX, event.pageY);
+                    $(draggingElement).parents('.day:first').addClass('OldDropablePoint');
+                    $(draggingElement).parents('.EventDetailContainer:first').css('width', $(draggingElement).parents('.EventDetailContainer:first').css('width'));
+                    
+                    $(document).on('mousemove', function(event) {
+                        
+                        if(!isDragging){
+                            document.removeEventListener('mousemove', event);
+                            return;
+                        }
 
-            movedEvent.hidden = true;
-            let elemBelow = document.elementFromPoint(event.clientX, event.clientY);
-            movedEvent.hidden = false;
+                        const xPositionDifference = event.pageX - draggingElement.offset().left;
+                        const yPositionDifference = event.pageY - draggingElement.offset().top;
+                        
+                        $(draggingElement).parents('.EventDetailContainer:first').offset({
+                            top: event.pageY - yPositionDifference,
+                            left: event.pageX - xPositionDifference
+                        });
+                      
+                        currentDroppable = $(document.elementFromPoint(event.clientX, event.clientY)).closest('.day');
+                                                
+                        $('.DropablePoint').removeClass('DropablePoint');
+                        
+                        if (currentDroppable.length > 0) {
+                            currentDroppable.addClass('DropablePoint');
+                            currentDroppable.append($(draggingElement).parents('.EventDetailContainer:first'));
+                        }
+                    });
+                }); 
 
-            // событие mousemove может произойти и когда указатель за пределами окна
-            // (мяч перетащили за пределы экрана)
+                var isDragging = false;
 
-            // если clientX/clientY за пределами окна, elementFromPoint вернёт null
-            if (!elemBelow) return;
+                //Add mouseup event listener to this element 
+                $(document).on('mouseup',function(e){ 
+                    var draggingElement = $(this);
 
-            // потенциальные цели переноса помечены классом droppable (может быть и другая логика)
-            let droppableBelow = elemBelow.closest('.day');
+                    if(draggingElement == undefined){
+                        return;
+                    }
 
-            if (currentDroppable != droppableBelow) {
-                // мы либо залетаем на цель, либо улетаем из неё
-                // внимание: оба значения могут быть null
-                //   currentDroppable=null,
-                //     если мы были не над droppable до этого события (например, над пустым пространством)
-                //   droppableBelow=null,
-                //     если мы не над droppable именно сейчас, во время этого события
+                    isDragging = false;
 
-                if (currentDroppable) {
-                // логика обработки процесса "вылета" из droppable (удаляем подсветку)
-                    //leaveDroppable(currentDroppable);
+                    $(draggingElement).parents('.EventDetailContainer:first').attr('style', oldEventParams.style);
 
-                    $(currentDroppable).removeClass('DropablePoint');
-                }
-                currentDroppable = droppableBelow;
-                if (currentDroppable) {
-                // логика обработки процесса, когда мы "влетаем" в элемент droppable
-                    //enterDroppable(currentDroppable);
-                    $(currentDroppable).addClass('DropablePoint');
+                    $('.OldDropablePoint').removeClass('OldDropablePoint');
+                    $('.DropablePoint').removeClass('DropablePoint');
+                    $('.movedEvent').removeClass('movedEvent');
 
-                }
-            }
-        }
+                    document.removeEventListener('mousemove',function(e){}); 
+                    $(currentDroppable).unbind('mousemove');
 
-        // передвигаем мяч при событии mousemove
-        document.addEventListener('mousemove', onMouseMove);
+                    [].slice.call(scheduleContainer.querySelectorAll('[data-bs-toggle="tooltip"]')).map(function (tooltipTriggerEl) {
+                        new bootstrap.Tooltip(tooltipTriggerEl).enable();
+                    });
 
-        // отпустить мяч, удалить ненужные обработчики
-        $(movedEvent).on("mouseup", function() {
-            document.removeEventListener('mousemove', onMouseMove);
-            movedEvent.onmouseup = null;
+                });
 
-            if($(currentDroppable).hasClass('day')){
-                $(currentDroppable).append(movedEvent);
-                $(movedEvent).attr('style', oldEventParams.style);
-                
-                
-                var eventData = JSON.parse($(movedEvent).children('input[name="EventData"]').val());
-                var newLocationId = parseInt($(currentDroppable).children('input[name="LocationId"]').val());
+                // //Add mouseover event listener to days 
+                // day.addEventListener('mouseover',function(){ 
+                //     //Add DropablePoint class to this element 
+                //     day.classList.add('DropablePoint'); 
+                // }); 
 
-                var daysDiff = moment(moment(eventData.start).startOf('day').diff(moment($(currentDroppable).children('input[name="Date"]').val()))).day();
-
-                var newStartDate = moment($(currentDroppable).children('input[name="Date"]').val())
-                                        .hour(moment(eventData.start).hour())
-                                        .minute(moment(eventData.start).minute());
-                
-                var newEndDate = moment(eventData.end)
-                                        .add(daysDiff, 'day');;
-                
-                var eventInList = schedule.events.find(x=>x.id == eventData.id); 
-                var oldEventLocationId = eventInList.locationId;
-                eventInList.locationId = newLocationId;
-                eventInList.start = newStartDate;
-                eventInList.end = newEndDate;
-
-                //$('.LocationsContainer input[name="LocationId"][value="' + oldEventLocationId + '"]:first').parents('.LocationRow:first').replaceAll(GetLocationRow(oldEventLocationId));
-                //$('.LocationsContainer input[name="LocationId"][value="' + newLocationId + '"]:first').parents('.LocationRow:first').replaceAll(GetLocationRow(newLocationId));
-                console.log('new Schedule', schedule);
-
-                $('#container').html(DrawSchedule(schedule));
-            }else{
-                $(oldEventParams.parent).append(movedEvent);
-                $(movedEvent).attr('style', oldEventParams.style);
-            }
-
-            $(currentDroppable).removeClass('DropablePoint');
-            oldEventParams = null;
-        });
-
-        movedEvent.ondragstart = function() {
-            return false;
-        };
+                // //Add mouseout event listener to days 
+                // day.addEventListener('mouseout',function(){ 
+                //     //Remove DropablePoint class from this element 
+                //     day.classList.remove('DropablePoint'); 
+                // }); 
+            }); 
+        }); 
     }
 
     //Отрисовка контекстного меню(элементы контекста)
@@ -416,7 +356,7 @@ function DrawSchedule(schedule)
     }
 
     //Добавляем события на основной элемент
-    $(container).find('div').each(()=>{
+    $(scheduleContainer).find('div').each(()=>{
         //Удаляем контекстное меню если кликнули мимо
         $(this).on('click',()=>{
             $('.daysContextMenu').remove();
@@ -429,7 +369,7 @@ function DrawSchedule(schedule)
     });
 
     //Включение ресайза после отрисовки
-    $(container).find('.EventDetailContainer').resizable({
+    $(scheduleContainer).find('.EventDetailContainer').resizable({
         resizeWidth: true,
         resizeHeight: false,
         onDragStart: null,      // hook into start drag operation (event,$el,opt passed - return false to abort drag)           
@@ -439,7 +379,7 @@ function DrawSchedule(schedule)
     });
 
     //Включаю все подсказки при наведении
-    var tooltipTriggerList = [].slice.call(container.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipTriggerList = [].slice.call(scheduleContainer.querySelectorAll('[data-bs-toggle="tooltip"]'));
     
     var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
         return new bootstrap.Tooltip(tooltipTriggerEl)
@@ -447,5 +387,5 @@ function DrawSchedule(schedule)
 
     $('.tooltip').hide();
 
-    return container;
+    return scheduleContainer;
 }
