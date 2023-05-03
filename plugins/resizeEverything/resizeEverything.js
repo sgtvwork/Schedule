@@ -90,7 +90,7 @@
                 let elParent = $($el).parent()
                 let parentOfParent = $(elParent).parent()
                 let daysNumber = $(parentOfParent).children()
-                let childNumber = $(elParent).attr('childnumber')
+                let childNumber = $(elParent).attr('childnumber')                
                 
                 let fullDaysBeforeEvent = 0
                 for (let index = 1; index < childNumber; index++) {
@@ -104,26 +104,79 @@
                 
                 if (whichHandle.indexOf('stickL') !== -1) {
                     const width = original_width - (e.pageX - original_mouse_x)
-                    if (width >= minWidth && width <= leftRange) {
-                        $el[0].style.width = width + 8 + 'px'
-                        $el[0].style.left = original_x + (e.pageX - original_mouse_x) + 'px'                        
+                    if (width >= minWidth && width <= leftRange) {  
+                        
+                        let prc = 100 * width / $('.day').width()
+                        let leftPrc = original_x * 100 / $('.day').width()
+                        let newLeftPrc = (original_x + (e.pageX - original_mouse_x)) * leftPrc / original_x
+
+                        // $el[0].style.width = width + 8 + 'px'
+                        $el[0].style.width = prc + '%'
+                        // $el[0].style.left = original_x + (e.pageX - original_mouse_x) + 'px'                    
+                        $el[0].style.left = newLeftPrc + '%'                    
                     }
                 }
                 else if (whichHandle.indexOf('stickR') !== -1) {
                     const width = original_width + (e.pageX - original_mouse_x);
                     if (width >= minWidth && width <= rightRange) {
-                        $el[0].style.width = width + 'px'
+                        let prc = 100 * width / $('.day').width()
+                        // $el[0].style.width = width + 'px'
+                        $el[0].style.width = prc + '%'
                     }                    
                 } 
             }
 
             function stopResize(e) {
-                console.log('stopresize')
                 e.stopPropagation();
                 e.preventDefault();
                 $(document).off('mousemove.' + opt.instanceId);
                 $(document).off('mouseup.' + opt.instanceId);
                 window.removeEventListener('mousemove.' + opt.instanceId, resize)
+
+                let eventdetail = $($el).children()[0]; console.log($($el).children())
+                let timeparagraph = $(eventdetail).children()[1]; 
+                let newTimeLabel = setTimelabel(whichHandle, $(timeparagraph).html(), 24 * 60 / $('.day').width(), $($el).width() - original_width)
+                $(timeparagraph).html(newTimeLabel)
+                let eventnameParagraph = $(eventdetail).children()[0]
+                let eventnameParagraphText = $(eventnameParagraph).html()
+                let newTitle = eventnameParagraphText + ' ' + newTimeLabel
+                $(eventdetail).attr('data-bs-original-title', newTitle)
+            }
+
+            function setTimelabel(direction, datestring, minutesInPixel, widthDifference) {
+                console.log(direction, datestring, minutesInPixel, widthDifference)
+                let coefficient = minutesInPixel * widthDifference
+                let split1 = datestring.split(' - ')
+                let split2 = split1[1].split(' ') //[1] hh mm
+                let split3 = split2[0].split('.') //dd mm yy
+
+                let split2L = split1[0].split(' ') //[1] hh mm
+                let split3L = split2L[0].split('.') //dd mm yy
+
+                let dateStart = new Date(`${split3L[1]} ${split3L[0]} ${split3L[2]} ${split2L[1]}:00`)
+                let dateEnd = new Date(`${split3[1]} ${split3[0]} ${split3[2]} ${split2[1]}:00`)
+                console.log(dateStart)
+
+                let resultString = ''
+
+                if (direction.indexOf('stickL') !== -1) {
+                    //изменяется и ширина и Х
+                    //меняем время начала события
+                    let newDateStart = new Date(dateStart.setMinutes(dateStart.getMinutes() - coefficient))
+                    resultString += newDateStart.toLocaleString().slice(0,-3)
+                    resultString += ' - ' + split1[1]
+                    console.log(resultString)
+                    return resultString
+                } 
+                else if (direction.indexOf('stickR') !== -1) {
+                    //изменяется только ширина
+                    //меняем время конца события
+                    resultString += split1[0] + ' - '
+                    let newDateEnd = new Date(dateEnd.setMinutes(dateEnd.getMinutes() + coefficient))
+                    resultString += newDateEnd.toLocaleString().slice(0,-3)
+                    console.log(resultString)
+                    return resultString
+                }
             }
 
             // ----------------------------------------------------------------------
