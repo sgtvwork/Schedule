@@ -25,7 +25,6 @@
 .day, .headerDay{
     list-style-type: none;
     padding-left: 0;
-    border: 0px solid black;
     width: 100%;
     height: 100%;
     border-collapse: collapse;
@@ -101,9 +100,7 @@
     border: 1px solid blue;
 }
 
-.OldDropablePoint{
-    background-color: coral;
-}
+
 
 .DropablePoint{
     background-image: url('https://www.meme-arsenal.com/memes/13ef4ecb4e4cc76ecf441a6826511f2c.jpg');
@@ -120,4 +117,8 @@
 
 .movedEvent:hover{
     background-color: red;
+}
+
+.OldDropablePoint{
+    background-color: coral;
 }

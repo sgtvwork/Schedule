@@ -166,12 +166,134 @@ function DrawSchedule(schedule)
 
                     //Добавляем в отрисованные
                     alreadyPushedEvents.push(currEvent);
+
+                    //#region drag events
+                    
+                    var oldEventParams;
+                    var currentDroppable;
+                    var isDragging = false;
+                    
+                    eventProgress.addEventListener('mousedown', function(e){ 
+                        
+                        [].slice.call(scheduleContainer.querySelectorAll('[data-bs-toggle="tooltip"]')).map(function (tooltipTriggerEl) {
+                            new bootstrap.Tooltip(tooltipTriggerEl).disable();
+                        });
+                        $('.tooltip').hide();
+
+                        
+                        var draggingElement = $(this);
+                        
+                        isDragging = true; 
+                        
+                        oldEventParams = {
+                            parent: $(draggingElement).parents('.day:first'),
+                            style: $(draggingElement).parents('.EventDetailContainer:first').attr('style')
+                        };
+                        console.log('oldEventParams', oldEventParams);
+                        $(draggingElement).addClass('movedEvent');
+                        $(draggingElement).parents('.day:first').addClass('OldDropablePoint');
+                        $(draggingElement).parents('.EventDetailContainer:first').css('width', $(draggingElement).parents('.EventDetailContainer:first').css('width'));
+                        
+                        $(document).on('mousemove', function(event) {
+                            
+                            if(!isDragging){
+                                document.removeEventListener('mousemove', event);
+                                return;
+                            }
+
+                            const xPositionDifference = event.pageX - draggingElement.offset().left;
+                            const yPositionDifference = event.pageY - draggingElement.offset().top;
+                            
+                            $(draggingElement).parents('.EventDetailContainer:first').offset({
+                                top: event.pageY - yPositionDifference,
+                                left: event.pageX - xPositionDifference
+                            });
+                            
+                            currentDroppable = $(document.elementFromPoint(event.clientX, event.clientY)).closest('.day');
+                                                    
+                            $('.DropablePoint').removeClass('DropablePoint');
+                            
+                            if (currentDroppable.length > 0) {
+                                currentDroppable.addClass('DropablePoint');
+                                currentDroppable.append($(draggingElement).parents('.EventDetailContainer:first'));
+                            }
+                        });
+                    }); 
+
+                    $(document).on('mouseup',function(e){ 
+                        var draggingElement = $(this);
+
+                        if(draggingElement == undefined){
+                            return;
+                        }
+                        console.log('2 oldEventParams', oldEventParams);
+                        
+                        isDragging = false;
+                        
+                        $('.OldDropablePoint').removeClass('OldDropablePoint');
+                        $('.DropablePoint').removeClass('DropablePoint');
+                        $('.movedEvent').removeClass('movedEvent');
+
+                        document.removeEventListener('mousemove',function(e){}); 
+
+                        [].slice.call(scheduleContainer.querySelectorAll('[data-bs-toggle="tooltip"]')).map(function (tooltipTriggerEl) {
+                            new bootstrap.Tooltip(tooltipTriggerEl).enable();
+                        });
+
+                        if(oldEventParams == undefined){
+                            return;
+                        }
+
+                        $(eventProgress).parents('.EventDetailContainer:first').attr('style', oldEventParams.style);
+                            
+                        // var prevDate = moment(currEvent.start).startOf('day');
+                        // var newDate = moment($(oldEventParams.parent).find('input[name="Date"]').val()).startOf('day');
+                        // var daysDiff = 0;
+
+                        // const start = moment(startDate);
+                        // const end = moment(endDate);
+                        // const newStart = moment(newStartDate);
+                        // const newEnd = moment(newEndDate);
+                        
+                        // // Вычисляем разницу между текущими датами и промежутком
+                        // const diff = end.diff(start, 'hours');
+                        
+                        // // Смещаем новые даты на ту же разницу
+                        // const newDiff = newEnd.diff(newStart, 'hours');
+                        // const offset = newDiff - diff;
+                        // newStart.add(offset, 'hours');
+                        // newEnd.add(offset, 'hours');
+
+
+
+
+
+
+
+                        // if(prevDate >= newDate){
+                        //     daysDiff = moment(prevDate).daysDiff(newDate, 'days');
+                        // }else{
+                        //     daysDiff = moment(newDate).daysDiff(prevDate, 'days');
+                        // }
+                        // console.log('prevDate', prevDate, 'newDate', newDate, 'daysDiff', daysDiff);
+
+                        var newLocationId = parseInt($(eventProgress).parents('.day:first').find('input[name="LocationId"]').val());
+                        var prevLocationId = parseInt($(oldEventParams.parent).find('input[name="LocationId"]').val());
+                        console.log('newLocationId', newLocationId, 'prevLocationId', prevLocationId);
+                        currEvent.locationId = newLocationId;
+
+                        RedrawRow(prevLocationId);
+                        RedrawRow(newLocationId);
+                    });
+
+                    //#endregion drag events
+
                 }
             }
 
             date = moment(date).add('1', 'day');
         }
-
+        
         return eventRow;
 
         //#endregion
@@ -221,108 +343,6 @@ function DrawSchedule(schedule)
         return eventRowHeader;
     }
     
-
-    dragElement(scheduleContainer);
-    
-    function dragElement(scheduleContainer){ 
-        
-        let days = scheduleContainer.querySelectorAll('.day'); 
-        var currentDroppable;
-        var oldEventParams;
-
-        days.forEach(function(day){
-
-            let eventDetails = day.querySelectorAll('.EventDetail'); 
-
-            eventDetails.forEach(function(eventDetail){ 
-
-                eventDetail.addEventListener('mousedown', function(e){ 
-                    
-                    [].slice.call(scheduleContainer.querySelectorAll('[data-bs-toggle="tooltip"]')).map(function (tooltipTriggerEl) {
-                        new bootstrap.Tooltip(tooltipTriggerEl).disable();
-                    });
-                    $('.tooltip').hide();
-
-                    
-                    var draggingElement = $(this);
-                    
-                    isDragging = true; 
-                    
-                    oldEventParams = {
-                        parent: $(draggingElement).parent('.day'),
-                        style: $(draggingElement).parents('.EventDetailContainer:first').attr('style')
-                    };
-                    console.log('oldEventParams', oldEventParams);
-                    $(draggingElement).addClass('movedEvent');
-                    $(draggingElement).parents('.day:first').addClass('OldDropablePoint');
-                    $(draggingElement).parents('.EventDetailContainer:first').css('width', $(draggingElement).parents('.EventDetailContainer:first').css('width'));
-                    
-                    $(document).on('mousemove', function(event) {
-                        
-                        if(!isDragging){
-                            document.removeEventListener('mousemove', event);
-                            return;
-                        }
-
-                        const xPositionDifference = event.pageX - draggingElement.offset().left;
-                        const yPositionDifference = event.pageY - draggingElement.offset().top;
-                        
-                        $(draggingElement).parents('.EventDetailContainer:first').offset({
-                            top: event.pageY - yPositionDifference,
-                            left: event.pageX - xPositionDifference
-                        });
-                      
-                        currentDroppable = $(document.elementFromPoint(event.clientX, event.clientY)).closest('.day');
-                                                
-                        $('.DropablePoint').removeClass('DropablePoint');
-                        
-                        if (currentDroppable.length > 0) {
-                            currentDroppable.addClass('DropablePoint');
-                            currentDroppable.append($(draggingElement).parents('.EventDetailContainer:first'));
-                        }
-                    });
-                }); 
-
-                var isDragging = false;
-
-                //Add mouseup event listener to this element 
-                $(document).on('mouseup',function(e){ 
-                    var draggingElement = $(this);
-
-                    if(draggingElement == undefined){
-                        return;
-                    }
-                    console.log('2 oldEventParams', oldEventParams);
-
-                    $(draggingElement).parents('.EventDetailContainer:first').attr('style', oldEventParams.style);
-                    
-                    isDragging = false;
-                    //oldEventParams = null;
-
-                    $('.OldDropablePoint').removeClass('OldDropablePoint');
-                    $('.DropablePoint').removeClass('DropablePoint');
-                    $('.movedEvent').removeClass('movedEvent');
-
-                    document.removeEventListener('mousemove',function(e){}); 
-                    //$(currentDroppable).unbind('mousemove');
-
-                    [].slice.call(scheduleContainer.querySelectorAll('[data-bs-toggle="tooltip"]')).map(function (tooltipTriggerEl) {
-                        new bootstrap.Tooltip(tooltipTriggerEl).enable();
-                    });
-                    
-                    var newLocationId = $(draggingElement).parents('.day:first').find('input[name="LocationId"]').val();
-                    var prevLocationId = $(oldEventParams.parent).find('input[name="LocationId"]').val();
-                    
-                    
-                    console.log('newLocationId', newLocationId)
-                    console.log('prevLocationId', prevLocationId)
-                    // RedrawRow(prevLocationId);
-                    // RedrawRow(newLocationId);
-                });
-
-            }); 
-        }); 
-    }
 
     //Отрисовка контекстного меню(элементы контекста)
     //Возможно как доп параметр надо передавать объект по которому кликнули, для более корректной отрисовки
