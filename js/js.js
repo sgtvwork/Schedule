@@ -53,7 +53,9 @@ function DrawSchedule(schedule)
         scheduleContainer.append(GetLocationRow(schedule.locations[l].id));
     }
 
-    function GetLocationRow(locationId){            
+    function GetLocationRow(locationId){
+
+        console.log('locationId', locationId);
 
         var location = schedule.locations.find(x=>x.id == locationId);
 
@@ -222,12 +224,14 @@ function DrawSchedule(schedule)
                         isDragging = true; 
                         
                         oldEventParams = {
-                            parent: $(draggingElement).parents('.day:first'),
+                            parent: $(draggingElement).parents('.ScheduleDay:first'),
                             style: $(draggingElement).parents('.EventDetailContainer:first').attr('style')
                         };
-                        console.log('oldEventParams', oldEventParams);
+
+                        console.log('draggingElement', draggingElement);
+
                         $(draggingElement).addClass('movedEvent');
-                        $(draggingElement).parents('.day:first').addClass('OldDropablePoint');
+                        $(draggingElement).parents('.ScheduleDay:first').addClass('OldDropablePoint');
                         $(draggingElement).parents('.EventDetailContainer:first').css('width', $(draggingElement).parents('.EventDetailContainer:first').css('width'));
                         
                         $(document).on('mousemove', function(event) {
@@ -245,7 +249,7 @@ function DrawSchedule(schedule)
                                 left: event.pageX - xPositionDifference
                             });
                             
-                            currentDroppable = $(document.elementFromPoint(event.clientX, event.clientY)).closest('.day');
+                            currentDroppable = $(document.elementFromPoint(event.clientX, event.clientY)).closest('.ScheduleDay');
                                                     
                             $('.DropablePoint').removeClass('DropablePoint');
                             
@@ -257,13 +261,12 @@ function DrawSchedule(schedule)
                     }); 
 
                     $(document).on('mouseup mouseLeave',function(e){ 
-                        console.log(e.type, isDragging, draggingElement, oldEventParams);
                         
                         if(!isDragging || draggingElement == undefined || draggingElement == null || oldEventParams == undefined){
                             return;
                         }
 
-                        console.log('2 oldEventParams', oldEventParams);
+                        console.log('oldEventParams', oldEventParams);
                         
                         isDragging = false;
                         
@@ -286,7 +289,7 @@ function DrawSchedule(schedule)
                         const eventStart = moment(currEvent.start);
                         const eventEnd = moment(currEvent.end);
                         const prevContainerDate = moment(currEvent.start).startOf('day');
-                        const newContainerDate = moment($(eventProgress).parents('.day:first').find('input[name="Date"]').val()).startOf('day');
+                        const newContainerDate = moment($(eventProgress).parents('.ScheduleDay:first').find('input[name="Date"]').val()).startOf('day');
 
                         const daysDiff = newContainerDate.diff(prevContainerDate, 'days');
                         const duration = moment.duration(eventEnd.diff(eventStart));
@@ -296,7 +299,7 @@ function DrawSchedule(schedule)
 
                         console.log('currEvent.start', currEvent.start, 'currEvent.end', currEvent.end);
                         
-                        var newLocationId = parseInt($(eventProgress).parents('.day:first').find('input[name="LocationId"]').val());
+                        var newLocationId = parseInt($(eventProgress).parents('.ScheduleDay:first').find('input[name="LocationId"]').val());
                         var prevLocationId = parseInt($(oldEventParams.parent).find('input[name="LocationId"]').val());
                         currEvent.locationId = newLocationId;
 
