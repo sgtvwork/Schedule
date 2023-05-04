@@ -1,5 +1,4 @@
-
-#container{
+.ScheduleContainer{
     position: relative;
 }
 
@@ -100,13 +99,13 @@
     border: 1px solid blue;
 }
 
-
-
 .DropablePoint{
-    background-image: url('https://www.meme-arsenal.com/memes/13ef4ecb4e4cc76ecf441a6826511f2c.jpg');
+    background-color: lightgreen !important;
+
+    /* background-image: url('https://www.meme-arsenal.com/memes/13ef4ecb4e4cc76ecf441a6826511f2c.jpg');
     background-position: center;
     background-size: cover;
-    background-repeat: no-repeat;
+    background-repeat: no-repeat; */
 }
 
 .movedEvent{

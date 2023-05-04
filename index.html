@@ -168,7 +168,16 @@
         onRenderStart: null,
         onRenderEnd: null,
         onRowRedrawStart: null,
-        onRowRedrawEnd: null
+        onRowRedrawEnd: null,
+        onCreateEvent: function (createdEventInfo) {
+            let text = '';
+            for (let prop in createdEventInfo) {
+                if (createdEventInfo.hasOwnProperty(prop)) {
+                    text += prop + ': ' + createdEventInfo[prop] + '\n';
+                }
+            }
+            console.log('created elem', text);
+        },
     }
 
     //Кастомное ПКМ меню
