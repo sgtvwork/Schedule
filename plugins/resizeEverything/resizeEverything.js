@@ -78,13 +78,19 @@
                 original_mouse_x = e.pageX;
                 $(document).on('mousemove.' + opt.instanceId, resize);
                 $(document).on('mouseup.' + opt.instanceId, stopResize);  
+
+                if (opt.onDragStart) {
+                    if (opt.onDragStart(e, $el, opt) === false){
+                        return;
+                    }                        
+                }
             }
 
             resizerL.on("mousedown." + opt.instanceId, mouseDown);
             resizerR.on("mousedown." + opt.instanceId, mouseDown);
 
             function resize (e){
-                let dayWidth = $('.day').width()
+                let dayWidth = $('.ScheduleDay').width()
                 let minWidth = dayWidth / options.eventMinWidth
 
                 let elParent = $($el).parent()
@@ -106,8 +112,8 @@
                     const width = original_width - (e.pageX - original_mouse_x)
                     if (width >= minWidth && width <= leftRange) {  
                         
-                        let prc = 100 * width / $('.day').width()
-                        let leftPrc = original_x * 100 / $('.day').width()
+                        let prc = 100 * width / $('.ScheduleDay').width()
+                        let leftPrc = original_x * 100 / $('.ScheduleDay').width()
                         let newLeftPrc = (original_x + (e.pageX - original_mouse_x)) * leftPrc / original_x
 
                         // $el[0].style.width = width + 8 + 'px'
@@ -119,11 +125,15 @@
                 else if (whichHandle.indexOf('stickR') !== -1) {
                     const width = original_width + (e.pageX - original_mouse_x);
                     if (width >= minWidth && width <= rightRange) {
-                        let prc = 100 * width / $('.day').width()
+                        let prc = 100 * width / $('.ScheduleDay').width()
                         // $el[0].style.width = width + 'px'
                         $el[0].style.width = prc + '%'
                     }                    
                 } 
+
+                if (opt.onDrag) {
+                    opt.onDrag(e)
+                }
             }
 
             function stopResize(e) {
@@ -133,18 +143,22 @@
                 $(document).off('mouseup.' + opt.instanceId);
                 window.removeEventListener('mousemove.' + opt.instanceId, resize)
 
-                let eventdetail = $($el).children()[0]; console.log($($el).children())
+                let eventdetail = $($el).children()[0]; 
                 let timeparagraph = $(eventdetail).children()[1]; 
-                let newTimeLabel = setTimelabel(whichHandle, $(timeparagraph).html(), 24 * 60 / $('.day').width(), $($el).width() - original_width)
+                let newTimeLabel = setTimelabel(whichHandle, $(timeparagraph).html(), 24 * 60 / $('.ScheduleDay').width(), $($el).width() - original_width)
                 $(timeparagraph).html(newTimeLabel)
                 let eventnameParagraph = $(eventdetail).children()[0]
                 let eventnameParagraphText = $(eventnameParagraph).html()
                 let newTitle = eventnameParagraphText + ' ' + newTimeLabel
                 $(eventdetail).attr('data-bs-original-title', newTitle)
+
+                if (opt.onDragEnd) {
+                    opt.onDragEnd(e /*params*/)
+                }
             }
 
             function setTimelabel(direction, datestring, minutesInPixel, widthDifference) {
-                console.log(direction, datestring, minutesInPixel, widthDifference)
+                //console.log(direction, datestring, minutesInPixel, widthDifference)
                 let coefficient = minutesInPixel * widthDifference
                 let split1 = datestring.split(' - ')
                 let split2 = split1[1].split(' ') //[1] hh mm
@@ -155,7 +169,7 @@
 
                 let dateStart = new Date(`${split3L[1]} ${split3L[0]} ${split3L[2]} ${split2L[1]}:00`)
                 let dateEnd = new Date(`${split3[1]} ${split3[0]} ${split3[2]} ${split2[1]}:00`)
-                console.log(dateStart)
+                //console.log(dateStart)
 
                 let resultString = ''
 
@@ -165,7 +179,7 @@
                     let newDateStart = new Date(dateStart.setMinutes(dateStart.getMinutes() - coefficient))
                     resultString += newDateStart.toLocaleString().slice(0,-3)
                     resultString += ' - ' + split1[1]
-                    console.log(resultString)
+                    //console.log(resultString)
                     return resultString
                 } 
                 else if (direction.indexOf('stickR') !== -1) {
@@ -174,7 +188,7 @@
                     resultString += split1[0] + ' - '
                     let newDateEnd = new Date(dateEnd.setMinutes(dateEnd.getMinutes() + coefficient))
                     resultString += newDateEnd.toLocaleString().slice(0,-3)
-                    console.log(resultString)
+                    //console.log(resultString)
                     return resultString
                 }
             }
@@ -226,11 +240,11 @@
             };
 
             //Do not ask, we just need this shit
-            var OLDWIDTH
-            var NEWWIDTH
-            var OLDX
-            var NEWX
-            var DIFF_BTW_CURSOR_N_LEFT
+            // var OLDWIDTH
+            // var NEWWIDTH
+            // var OLDX
+            // var NEWX
+            // var DIFF_BTW_CURSOR_N_LEFT
 
             // function startDragging(e) {
             //     // Prevent dragging a ghost image in HTML5 / Firefox and maybe others    
@@ -378,19 +392,19 @@
             //     return false;
             // }
 
-            function getMousePos(e) {
-                var pos = { x: 0, y: 0, width: 0, height: 0 };
-                if (typeof e.pageX === "number") {
-                    pos.x = e.pageX;
-                    pos.y = e.clientY;
-                } else if (e.originalEvent.touches) {
-                    pos.x = e.originalEvent.touches[0].pageX;
-                    pos.y = e.originalEvent.touches[0].clientY;
-                } else
-                    return null;
+            // function getMousePos(e) {
+            //     var pos = { x: 0, y: 0, width: 0, height: 0 };
+            //     if (typeof e.pageX === "number") {
+            //         pos.x = e.pageX;
+            //         pos.y = e.clientY;
+            //     } else if (e.originalEvent.touches) {
+            //         pos.x = e.originalEvent.touches[0].pageX;
+            //         pos.y = e.originalEvent.touches[0].clientY;
+            //     } else
+            //         return null;
 
-                return pos;
-            }
+            //     return pos;
+            // }
 
             function getHandle(selector, $el) {
                 return $el.find('.stickR')

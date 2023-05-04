@@ -1,10 +1,12 @@
 .stickL, .stickR{
   position: absolute;
-  bottom: 0px;
-  height: 100%;
+  top: 0px;
+  /* height: 100%; */
+  min-height: 3rem;
   width: 4px;
   cursor: ew-resize;
   background: blue;
+  z-index: 2000;
 }  
 
 .stickL{  

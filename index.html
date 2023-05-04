@@ -22,26 +22,11 @@
         <section id="container" class="container mt-4"></section>
     </body>
     <script>
-    $(document).click((e) => {
-        // let date = new Date('05.01.2023 12:30:01')
-        // console.log(date)
-
-        // date.setMinutes(date.getMinutes() + 32154)
-        // console.log(date)
-
-        // console.log(window.innerWidth)
-        // console.log(e.pageX)
-
-        // console.log($('.DaysContainer').position().left)
-        // console.log($('.DaysContainer').position().left + $('.DaysContainer').width())
-    })
-    //#region scheduleParam
-
     //Места (Объекты левой колонки)
     var locations = [
         {
             id: 1,
-            name: "Paris"
+            name: '<p class="badge bg-secondary" meta="" style="font-size:16px;font-weight:400;margin-right:3px;">Paris</p>'
         },
         {
             id: 2,
@@ -161,181 +146,72 @@
         }
     ];
 
-    //Контекстное меню (Пока не помещал в общий объект, существует как глобальная переменная)
-    var dayContextMenu = [
-        {
-            text: "Создать",
-            disabled: false,
-            lClick: function(){ 
-                console.log('Context button', "Создать", this);
-            }
-        },
-        {
-            text: "Переместить",
-            disabled: true,
-            lClick: function(){ console.log('Context button', "Переместить");}
-        },
-        {
-            text: "Редактировать",
-            disabled: true,
-            lClick: function(){ console.log('Context button', "Редактировать");}
-        },
-        {
-            text: "Удалить",
-            disabled: false,
-            lClick: function(){ console.log('Context button', "Удалить");}
-        }
-    ];
-
     //События при нажатии кнопок мыши по сетке
     var scheduleEvents = {
-        //Левый клик
-        lClick: function (e) {
-            $('.redBorder').removeClass('redBorder');
-            $('.blueBorder').removeClass('blueBorder');
-            // $(this).addClass('redBorder');
-            if (e.target.className === 'day') {
-                addNewEvent(e)
+        onClickEvent: null,
+        onClickTimeline: null,
+        onContextMenuEvent: null,
+        onContextMenuTimeline: null,
+        onResizeStart: function (p1, p2, p3) {
+            console.log('parameters')
+            console.log(p1, p2, p3)
+        },
+        onResize: function (e) {
+            let number = 0;
+            console.log(number)
+            number++
+        },
+        onResizeEnd: null,
+        onDragStart: null,
+        onDrag: null,
+        onDragEnd: null,
+        onRenderStart: null,
+        onRenderEnd: null,
+        onRowRedrawStart: null,
+        onRowRedrawEnd: null
+    }
+
+    //Кастомное ПКМ меню
+    var cMenu = [
+        {
+            text: 'Привет',
+            disabled: false,
+            lClick: function (e) {
+                alert(e.target)
+            }
+        },
+        {
+            text: 'Пока',
+            disabled: false,
+            lClick: function (e) {
+                alert(e.target)
+            }
+        },
+        {
+            text: 'Пашол нахуй',
+            disabled: false,
+            lClick: function (e) {
+                alert(e.target)
             }
         }
-        //Правый клик
-        , rClick: function(){
-            $('.redBorder').removeClass('redBorder');
-            $('.blueBorder').removeClass('blueBorder');
-            $(this).addClass('blueBorder');
-            DrawContextMenu(dayContextMenu);
-            return false;
-        }
-    }
+    ]
 
     //Основной объект, на основе него идет отрисовка
     var scheduleVariable = {
+        title: 'Комнаты / Даты',
         start: moment().startOf('day'),
         end: moment().endOf('day').add('5', 'day'),
         locations: locations,
         events: events,
-        scheduleEvents: scheduleEvents
+        scheduleEvents: scheduleEvents,
+        contextMenu: cMenu
     }
 
-    function addNewEvent(e) {
-        let target = e.target.closest('.day')
-        let width = 50
-        let ghostEvent = createEventDiv(e, width)
-
-        $(target).append(ghostEvent)
-        console.log('event created')
-        
-        //пока отключил
-        //$(document).on('mousemove', rendering)
-        //$(document).on('mouseup', renderStop)
-
-        function rendering(e){        
-            console.log('rendering')
-            let wdth = $(ghostEvent).width()
-            $(ghostEvent).css('width', wdth + 1 + 'px')
-        }
-        function renderStop(e){
-            console.log('render stop')
-            e.stopPropagation();
-            e.preventDefault();
-            $(document).off('mousemove', rendering);
-            $(document).off('mouseup', renderStop);
-        }
-    }
-
-    function createEventDiv (e, width) {
-        let target = e.target.closest('.day')    
-        let start_x = e.pageX - target.getBoundingClientRect().left
-        let dateStart = new Date( $(target).find('input[name="Date"]').val() ).toLocaleDateString()
-        
-        let leftPrc = start_x * 100 / $('.day').width()
-        let widthPrc = width * 100 / $('.day').width()
-
-        let ghostEvent = $('<div>', {
-            class: 'EventDetailContainer ',
-        }).css({
-            // left: start_x +'px', 
-            top: 0.1 + 'rem',
-            // width: width + 'px'
-            left: leftPrc,
-            width: widthPrc
-        });
-
-        let startEventWidth = $(ghostEvent).width()
-
-        let eventInner = $('<div>', {
-            class: 'EventDetail'
-        }).attr('data-bs-toggle', 'tooltip')
-        .attr('data-bs-original-title', 'Новое событие')
-        
-        let innerText = $('<p>', {
-            class: 'm-0 p-0 overflow-hidden text-nowrap fw-bold fs-6'
-        }).html('Новое мероприятие')  
-        
-        // let closeButton = document.createElement('a')
-        //                 $(closeButton).html('x')
-        //                 $(closeButton).attr('href', '#')
-        //                     .attr('onclick', 'deleteNewEvent(this)')
-        //                 $(closeButton).css('text-decoration', 'none')
-        //                     .css('color', 'white')
-        //                     .css('position', 'absolute')
-        //                     .css('top', '0px')
-        //                     .css('right', '5px')    
-        
-        $(ghostEvent).append(eventInner)
-        let res = getEventDates(ghostEvent, target, width)
-        console.log(res)
-        let innerDate = $('<p>', {
-            class: 'm-0 p-0 overflow-hidden text-nowrap fs-6'
-        }).html(res)
-
-        $(eventInner).append(innerText).append(innerDate)
-
-        $(ghostEvent).resizable({
-            resizeWidth: true,
-            resizeHeight: false,
-            onDragStart: null,             
-            onDragEnd: null,            
-            onDrag: null,           
-            eventMinWidth: 4
-        });
-        
-        return ghostEvent
-    }
-
-    function getEventDates(event, target, startEventWidth){
-        console.log('tut', startEventWidth)
-        let dateStart = new Date( $(target).find('input[name="Date"]').val() ).toLocaleDateString()
-        let dateArr = dateStart.split('.')
-
-        let minutesInPixel = startEventWidth * 24 * 60 / $('.day').width()
-        minutesInPixel = Math.trunc(minutesInPixel)
-        console.log('mp', minutesInPixel)
-        let w = Number ($(event).css('left').replace('px', '') )
-        let dw = $('.day').width()
-        let prc = w * 100 / dw
-        let time = 24 * 60 * prc / 100
-        let hrs = Math.trunc(time / 60)
-        hrs = hrs.toString().length === 2 ? hrs : '0' + hrs
-        let mins = Math.trunc( Number(time) % 60 )
-        mins = mins.toString().length === 2 ? mins : '0' + mins
-
-        let stringResult = ''
-        let finalStartDate = new Date(`${dateArr[1]} ${dateArr[0]} ${dateArr[2]} ${hrs}:${mins}:00`)
-        stringResult += finalStartDate.toLocaleString().replace(',', '').slice(0,-3)
-        let finalEndDate = new Date(finalStartDate.setMinutes(finalStartDate.getMinutes() + Math.trunc(minutesInPixel) ))
-        stringResult += ' - '
-        stringResult += finalEndDate.toLocaleString().replace(',', '').slice(0,-3)
-        console.log(stringResult)
-        return stringResult
-    }
-
-    //#endregion scheduleParam
-
+    //Инициализация
     $(document).ready(()=>{
-        $('#container').html(DrawSchedule(scheduleVariable));        
+        $('#container').html(
+            DrawSchedule(scheduleVariable)
+        );        
     });
-
     </script>
-
 </html>

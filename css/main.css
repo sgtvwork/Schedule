@@ -22,7 +22,7 @@
     vertical-align: middle;
 }
 
-.day, .headerDay{
+.ScheduleDay, .headerDay{
     list-style-type: none;
     padding-left: 0;
     border: 0px solid black;
@@ -36,7 +36,7 @@
     padding: 0;    
 }
 
-.DaysContainer .day:nth-child(even){
+.DaysContainer .ScheduleDay:nth-child(even){
     background-color: #F5F5F5;
 }
 
