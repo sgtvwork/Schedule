@@ -179,10 +179,11 @@ function DrawSchedule(schedule)
 
                     //Увеличиваем "родителя"
                     timeZone.style = 'min-height: ' + (top * 3.1 + 0.1) + 'rem;';
+
                     //Название мероприятия
                     var eventName = document.createElement('p');
                     eventName.classList = 'm-0 p-0 overflow-hidden text-nowrap fw-bold fs-6';
-                    eventName.innerText = currEvent.name;
+                    eventName.innerText = '[' + currEvent.id + '] ' + currEvent.name;
                     eventProgress.append(eventName);
                     
                     //Продолжительность мероприятия
@@ -206,7 +207,8 @@ function DrawSchedule(schedule)
                     var oldEventParams;
                     var currentDroppable;
                     var isDragging = false;
-                    
+                    var draggingElement;
+
                     eventProgress.addEventListener('mousedown', function(e){ 
                         
                         [].slice.call(scheduleContainer.querySelectorAll('[data-bs-toggle="tooltip"]')).map(function (tooltipTriggerEl) {
@@ -215,7 +217,7 @@ function DrawSchedule(schedule)
                         $('.tooltip').hide();
 
                         
-                        var draggingElement = $(this);
+                        draggingElement = $(this);
                         
                         isDragging = true; 
                         
@@ -254,12 +256,13 @@ function DrawSchedule(schedule)
                         });
                     }); 
 
-                    $(document).on('mouseup',function(e){ 
-                        var draggingElement = $(this);
-
-                        if(draggingElement == undefined){
+                    $(document).on('mouseup mouseLeave',function(e){ 
+                        console.log(e.type, isDragging, draggingElement, oldEventParams);
+                        
+                        if(!isDragging || draggingElement == undefined || draggingElement == null || oldEventParams == undefined){
                             return;
                         }
+
                         console.log('2 oldEventParams', oldEventParams);
                         
                         isDragging = false;
@@ -279,41 +282,22 @@ function DrawSchedule(schedule)
                         }
 
                         $(eventProgress).parents('.EventDetailContainer:first').attr('style', oldEventParams.style);
-                            
-                        // var prevDate = moment(currEvent.start).startOf('day');
-                        // var newDate = moment($(oldEventParams.parent).find('input[name="Date"]').val()).startOf('day');
-                        // var daysDiff = 0;
-
-                        // const start = moment(startDate);
-                        // const end = moment(endDate);
-                        // const newStart = moment(newStartDate);
-                        // const newEnd = moment(newEndDate);
                         
-                        // // Вычисляем разницу между текущими датами и промежутком
-                        // const diff = end.diff(start, 'hours');
+                        const eventStart = moment(currEvent.start);
+                        const eventEnd = moment(currEvent.end);
+                        const prevContainerDate = moment(currEvent.start).startOf('day');
+                        const newContainerDate = moment($(eventProgress).parents('.day:first').find('input[name="Date"]').val()).startOf('day');
+
+                        const daysDiff = newContainerDate.diff(prevContainerDate, 'days');
+                        const duration = moment.duration(eventEnd.diff(eventStart));
+
+                        currEvent.start = eventStart.add(daysDiff, 'days');
+                        currEvent.end = currEvent.start.clone().add(duration);
+
+                        console.log('currEvent.start', currEvent.start, 'currEvent.end', currEvent.end);
                         
-                        // // Смещаем новые даты на ту же разницу
-                        // const newDiff = newEnd.diff(newStart, 'hours');
-                        // const offset = newDiff - diff;
-                        // newStart.add(offset, 'hours');
-                        // newEnd.add(offset, 'hours');
-
-
-
-
-
-
-
-                        // if(prevDate >= newDate){
-                        //     daysDiff = moment(prevDate).daysDiff(newDate, 'days');
-                        // }else{
-                        //     daysDiff = moment(newDate).daysDiff(prevDate, 'days');
-                        // }
-                        // console.log('prevDate', prevDate, 'newDate', newDate, 'daysDiff', daysDiff);
-
                         var newLocationId = parseInt($(eventProgress).parents('.day:first').find('input[name="LocationId"]').val());
                         var prevLocationId = parseInt($(oldEventParams.parent).find('input[name="LocationId"]').val());
-                        console.log('newLocationId', newLocationId, 'prevLocationId', prevLocationId);
                         currEvent.locationId = newLocationId;
 
                         RedrawRow(prevLocationId);
