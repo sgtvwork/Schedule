@@ -1,6 +1,8 @@
 //Отрисовывает шахматку и возвращает как html объект
 function DrawSchedule(schedule)
 {
+    console.log('schedule', schedule);
+
     //Контекстное меню (Пока не помещал в общий объект, существует как глобальная переменная)
     var dayContextMenu
     var contextMenuExists = false
@@ -41,7 +43,7 @@ function DrawSchedule(schedule)
     var scheduleContainer = document.createElement('div');
     scheduleContainer.classList = 'p-0 ScheduleContainer';
     $(scheduleContainer).on('contextmenu', function() {return false;});
-    var daysDifference = schedule.end.diff(schedule.start, 'days') + 1; 
+    var daysDifference = moment(schedule.end).startOf('day').diff(moment(schedule.start).startOf('day'), 'days') + 1; 
     
     //Отрисовка шапки
     scheduleContainer.append(GetScheduleHeader(daysDifference));
@@ -81,7 +83,7 @@ function DrawSchedule(schedule)
         eventsColumn.classList = 'col-9 DaysContainer';
         eventRow.append(eventsColumn);
 
-        var date = moment(schedule.start);
+        var date = new Date(schedule.start).setHours(0, 0, 0, 0);
 
         //Уже отрисованные элементы в этой строке (нужен для определения отступа сверху)
         var alreadyPushedEvents = [];
@@ -90,6 +92,8 @@ function DrawSchedule(schedule)
         
         //Цикл отрисовки сетки дней
         for(var i = 0; i < daysDifference; i++){
+            console.log('date1', moment(date).format('DD.MM.YYYY HH.mm.ss'));
+
             //Колонка день
             var timeZone = document.createElement('li');
             timeZone.classList = 'ScheduleDay';    
@@ -105,7 +109,7 @@ function DrawSchedule(schedule)
             var dateInfo = document.createElement('input');
             dateInfo.type = 'hidden';
             dateInfo.name = 'Date';
-            dateInfo.value = date.toISOString();
+            dateInfo.value = moment(date).format('YYYY-MM-DDTHH:mm:SS.000Z'),
             timeZone.append(dateInfo);
 
             var locationInfo = document.createElement('input');
@@ -117,8 +121,8 @@ function DrawSchedule(schedule)
             //Получаем список событий начинающийся в этот день
             var events = schedule.events.filter(
                 x => x.locationId == location.id 
-                && x.start >= date.startOf('day')
-                && x.start <= date.endOf('day')
+                && x.start >= moment(date).startOf('day')
+                && x.start <= moment(date).endOf('day')
             );
 
             console.log(events)
@@ -127,7 +131,7 @@ function DrawSchedule(schedule)
             if(i == 0){
                 events = schedule.events.filter(
                     x=>x.locationId == location.id 
-                    && x.start <= date.endOf('day')
+                    && x.start <= moment(date).endOf('day')
                 ).sort(x=>x.start);
             }
             
@@ -156,7 +160,7 @@ function DrawSchedule(schedule)
                     if(currEvent.start >= schedule.start && currEvent.end <= schedule.end)
                     {
                         eventProgressContainer.style.width = (currEvent.end.diff(currEvent.start, 'day', true) * 100) + '%';
-                        eventProgressContainer.style.left = (currEvent.start.diff(date.startOf('day'), 'day', true) * 100) + '%';
+                        eventProgressContainer.style.left = (currEvent.start.diff(moment(date), 'day', true) * 100) + '%';
                     }
                     else if(currEvent.start < schedule.start && currEvent.end > schedule.end)
                     {
@@ -166,7 +170,7 @@ function DrawSchedule(schedule)
                     else if(currEvent.start >= schedule.start )
                     {
                         eventProgressContainer.style.width = (schedule.end.diff(currEvent.start, 'day', true) * 100) + '%';
-                        eventProgressContainer.style.left = (currEvent.start.diff(date.startOf('day'), 'day', true) * 100) + '%';
+                        eventProgressContainer.style.left = (currEvent.start.diff(moment(date), 'day', true) * 100) + '%';
                     }
                     else
                     {
@@ -258,7 +262,7 @@ function DrawSchedule(schedule)
                         });
                     }); 
 
-                    $(document).on('mouseup mouseLeave',function(e){ 
+                    $(document).on('mouseup',function(e){ 
                         
                         if(!isDragging || draggingElement == undefined || draggingElement == null || oldEventParams == undefined){
                             return;
@@ -310,12 +314,13 @@ function DrawSchedule(schedule)
 
                 }
             }
+            console.log('date2', moment(date).format('DD.MM.YYYY HH.mm.ss'));
 
-            date = moment(date).add('1', 'day');
+            date = moment(date).startOf('day').add('1', 'day');
         }
         
         //Включение ресайза
-        $(eventRow).find('.EventDetailContainer').resizable({
+        $(eventRow).find('.EventDetailContainer').resizableSafe({
             resizeWidth: true,
             resizeHeight: false,
             onDragStart: schedule.scheduleEvents.onResizeStart !== null ? schedule.scheduleEvents.onResizeStart : null,       // hook into start drag operation (event,$el,opt passed - return false to abort drag)           
@@ -377,7 +382,7 @@ function DrawSchedule(schedule)
         eventsColumnHeader.classList = 'col-9 GridHeader';
         eventRowHeader.append(eventsColumnHeader);
 
-        var headerDate = schedule.start;
+        var headerDate = moment(schedule.start).startOf('day');
 
         //Отрисовка шапки
         for(var i = 0; i < daysDifference; i++){
