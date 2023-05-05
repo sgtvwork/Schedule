@@ -207,20 +207,20 @@ function DrawSchedule(schedule)
                     var isDragging = false;
                     var draggingElement;
 
-                    eventProgress.addEventListener('mousedown', function(e){ 
+                    $(eventProgress).off('mousedown').on('mousedown', function(e){ 
                         
                         [].slice.call(scheduleContainer.querySelectorAll('[data-bs-toggle="tooltip"]')).map(function (tooltipTriggerEl) {
                             new bootstrap.Tooltip(tooltipTriggerEl).disable();
                         });
-                        $('.tooltip').hide();
 
+                        $('.tooltip').hide();
                         
                         draggingElement = $(this);
                         
                         isDragging = true; 
                         
                         oldEventParams = {
-                            parent: $(draggingElement).parents('.ScheduleDay:first'),
+                            parent: $(draggingElement).closest('.ScheduleDay')[0],
                             style: $(draggingElement).parents('.EventDetailContainer:first').attr('style')
                         };
 
@@ -249,7 +249,7 @@ function DrawSchedule(schedule)
                             
                             if (currentDroppable.length > 0) {
                                 currentDroppable.addClass('DropablePoint');
-                                currentDroppable.append($(draggingElement).parents('.EventDetailContainer:first'));
+                                currentDroppable.append($(draggingElement).parents('.EventDetailContainer:first').detach());
                             }
                         });
                     }); 
@@ -293,8 +293,13 @@ function DrawSchedule(schedule)
                         var prevLocationId = parseInt($(oldEventParams.parent).find('input[name="LocationId"]').val());
                         currEvent.locationId = newLocationId;
 
+                        console.log('oldEventParams', oldEventParams)
+                        console.log('prevLocationId', prevLocationId, 'newLocationId', newLocationId)
+
                         RedrawRow(prevLocationId);
                         RedrawRow(newLocationId);
+
+                        oldEventParams = null;
                     });
 
                     //#endregion drag events
