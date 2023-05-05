@@ -254,7 +254,7 @@ function DrawSchedule(schedule)
                         });
                     }); 
 
-                    $(document).on('mouseup mouseLeave',function(e){ 
+                    $(document).on('mouseup',function(e){ 
                         
                         if(!isDragging || draggingElement == undefined || draggingElement == null || oldEventParams == undefined){
                             return;
