@@ -37,7 +37,8 @@
             touchActionNone: true,
             // instance id
             instanceId: null,
-            eventMinWidth: 4
+            eventMinWidth: 4,
+            redrawFunc: null
     };
         if (typeof options == "object")
             defaultOptions = $.extend(defaultOptions, options);
@@ -113,8 +114,16 @@
                     if (width >= minWidth && width <= leftRange) {  
                         
                         let prc = 100 * width / $('.ScheduleDay').width()
-                        let leftPrc = original_x * 100 / $('.ScheduleDay').width()
-                        let newLeftPrc = (original_x + (e.pageX - original_mouse_x)) * leftPrc / original_x
+                        let leftPrc = original_x * 100 / $('.ScheduleDay').width()                        
+                        let newLeftPrc = 0
+                        if (original_x === 0) {
+                            newLeftPrc = (original_x + (e.pageX - original_mouse_x))
+                            newLeftPrc = 100 * newLeftPrc / $('.ScheduleDay').width() 
+                        } 
+                        else {
+                            newLeftPrc = (original_x + (e.pageX - original_mouse_x)) * leftPrc / original_x
+                        }
+                        
 
                         // $el[0].style.width = width + 8 + 'px'
                         $el[0].style.width = prc + '%'
@@ -151,6 +160,24 @@
                 let eventnameParagraphText = $(eventnameParagraph).html()
                 let newTitle = eventnameParagraphText + ' ' + newTimeLabel
                 $(eventdetail).attr('data-bs-original-title', newTitle)
+                
+                if (options.redrawFunc) {
+                    let eventData = JSON.parse( $($el).find('input[name=EventData]').val() )
+
+                    let dates = newTimeLabel.split(' - ')
+                    let sd = dates[0].replace(',', '')
+                    let ed = dates[1].replace(',', '')
+
+                    let sDate = dateParse(sd)
+                    let eDate = dateParse(ed)                 
+
+                    let updatedData = {
+                        startDate: moment(sDate),
+                        endDate: moment(eDate),
+                        eventId: eventData.id
+                    }
+                    options.redrawFunc(eventData.locationId, updatedData)
+                }
 
                 if (opt.onDragEnd) {
                     opt.onDragEnd(e /*params*/)
@@ -191,6 +218,12 @@
                     //console.log(resultString)
                     return resultString
                 }
+            }
+
+            function dateParse (datestring) {
+                let dateParts = datestring.split(/[.,: ]+/);
+                let correctDate = new Date(dateParts[2], dateParts[1]-1, dateParts[0], dateParts[3], dateParts[4]);
+                return correctDate
             }
 
             // ----------------------------------------------------------------------

@@ -85,7 +85,9 @@ function DrawSchedule(schedule)
 
         //Уже отрисованные элементы в этой строке (нужен для определения отступа сверху)
         var alreadyPushedEvents = [];
-
+        
+        console.log(schedule.events)
+        
         //Цикл отрисовки сетки дней
         for(var i = 0; i < daysDifference; i++){
             //Колонка день
@@ -118,6 +120,8 @@ function DrawSchedule(schedule)
                 && x.start >= date.startOf('day')
                 && x.start <= date.endOf('day')
             );
+
+            console.log(events)
 
             //Получаем список событий начинающийся в этот день и ранее (если начало выходит за диапазон отрисовки)
             if(i == 0){
@@ -317,7 +321,25 @@ function DrawSchedule(schedule)
             onDragStart: schedule.scheduleEvents.onResizeStart !== null ? schedule.scheduleEvents.onResizeStart : null,       // hook into start drag operation (event,$el,opt passed - return false to abort drag)           
             onDragEnd: null,        // hook into stop drag operation (event,$el,opt passed)        
             onDrag: schedule.scheduleEvents.onResize !== null ? schedule.scheduleEvents.onResize : null,           // hook into each drag operation (event,$el,opt passed)
-            eventMinWidth: 4        // in hours
+            eventMinWidth: 4,        // in hours
+            redrawFunc: function (locationId, data) {
+                console.log('fijsffhk',data)
+
+                var event = schedule.events.find(x => x.id === data.eventId);
+                event.start = data.startDate;
+                event.end = data.endDate;
+                console.log(schedule)
+                // const index = schedule.events.findIndex(x => x.id === data.eventId)
+                // if (index !== -1) {
+                //     const newElem = { 
+                //         ...schedule.events[index],
+                //         end: data.endDate,
+                //         start: data.startDate
+                //     }
+                //     schedule.events[index] = newElem
+                // }
+                RedrawRow(locationId)
+            }
         });
 
         return eventRow;
@@ -326,9 +348,10 @@ function DrawSchedule(schedule)
     }
 
     function RedrawRow(locationId){
+        console.log('locid', locationId)
         var $currentRow = $('input[name="LocationId"][value="' + locationId + '"]:first', scheduleContainer).parents('.LocationRow');
         $currentRow.replaceWith(GetLocationRow(locationId));
-        schedule.scheduleEvents.drawEnd;
+        // schedule.scheduleEvents.drawEnd();
     }
 
     function GetScheduleHeader(daysDifference){
