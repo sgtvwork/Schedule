@@ -401,7 +401,22 @@ function DrawSchedule(schedule)
             //Колонка день
             var timeZoneHeader = document.createElement('li');
             timeZoneHeader.classList = 'headerDay text-center';
-            timeZoneHeader.innerText = moment(headerDate).format('DD.MM.YYYY');
+            let currentDate = moment(headerDate).format('DD.MM.YYYY').toString();
+            let array = currentDate.split('.')
+            let shortName = monthInText(array[1], true)
+            let longName = monthInText(array[1], false)
+            let isChill = isChillDay(array[2], array[1], array[0])
+            if (isChill) {
+                timeZoneHeader.innerHTML = 
+                    `<span style="color:red;font-weight:500">${array[0]}</span><br><span style="font-size:12px">${shortName}</span>`            
+            }
+            else {
+                timeZoneHeader.innerHTML = 
+                    `<span style="font-weight:500">${array[0]}</span><br><span style="font-size:12px">${shortName}</span>`        
+            }
+
+            timeZoneHeader.title = array[0] + ' ' + longName + ' ' + array[2] + ' г.'
+            // timeZoneHeader.innerText = moment(headerDate).format('DD.MM.YYYY');
             eventsColumnHeader.append(timeZoneHeader);
 
             headerDate = moment(headerDate).add('1', 'day');
@@ -589,6 +604,33 @@ function DrawSchedule(schedule)
         stringResult += finalEndDate.toLocaleString().replace(',', '').slice(0,-3)
         
         return stringResult
+    }
+
+    //Вспомогательные функции для дат в отрисовке шапки
+    function monthInText(str, short) {
+        switch (str) {
+            case '01': return short === true ? 'ЯНВ' : 'января';
+            case '02': return short === true ? 'ФЕВ' : 'февраля';
+            case '03': return short === true ? 'МАР' : 'марта';
+            case '04': return short === true ? 'АПР' : 'апреля';
+            case '05': return short === true ? 'МАЙ' : 'мая';
+            case '06': return short === true ? 'ИЮН' : 'июня';
+            case '07': return short === true ? 'ИЮЛ' : 'июля';
+            case '08': return short === true ? 'АВГ' : 'августа';
+            case '09': return short === true ? 'СЕН' : 'сентября';
+            case '10': return short === true ? 'ОКТ' : 'октября';
+            case '11': return short === true ? 'НОЯ' : 'ноября';
+            case '12': return short === true ? 'ДЕК' : 'декабря';
+        }
+    }
+    function isChillDay(d, m, y) {
+        let days = [0, 1, 2, 3, 4, 5, 6];
+        let date = new Date(`${d}-${m}-${y}`)
+        var n = date.getDay();
+        if (days[n] === 0 || days[n] === 6) {
+            return true
+        }
+        return false
     }
 
     //Включаю все подсказки при наведении
