@@ -482,34 +482,6 @@ function DrawSchedule(schedule)
         }        
     }
 
-    //Получение диапазона дат для нового события
-    function getEventDates(event, target, startEventWidth){
-        
-        let dateStart = new Date( $(target).find('input[name="Date"]').val() ).toLocaleDateString()
-        let dateArr = dateStart.split('.')
-
-        let minutesInPixel = startEventWidth * 24 * 60 / $('.ScheduleDay').width()
-        minutesInPixel = Math.trunc(minutesInPixel)
-        
-        let w = Number ($(event).css('left').replace('px', '') )
-        let dw = $('.ScheduleDay').width()
-        let prc = w * 100 / dw
-        let time = 24 * 60 * prc / 100
-        let hrs = Math.trunc(time / 60)
-        hrs = hrs.toString().length === 2 ? hrs : '0' + hrs
-        let mins = Math.trunc( Number(time) % 60 )
-        mins = mins.toString().length === 2 ? mins : '0' + mins
-
-        let stringResult = ''
-        let finalStartDate = new Date(`${dateArr[1]} ${dateArr[0]} ${dateArr[2]} ${hrs}:${mins}:00`)
-        stringResult += finalStartDate.toLocaleString().replace(',', '').slice(0,-3)
-        let finalEndDate = new Date(finalStartDate.setMinutes(finalStartDate.getMinutes() + Math.trunc(minutesInPixel) ))
-        stringResult += ' - '
-        stringResult += finalEndDate.toLocaleString().replace(',', '').slice(0,-3)
-        
-        return stringResult
-    }
-
     //Вспомогательные функции для дат в отрисовке шапки
     function monthInText(str, short) {
         switch (str) {
