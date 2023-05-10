@@ -6,10 +6,7 @@ function DrawSchedule(schedule)
     //Контекстное меню (Пока не помещал в общий объект, существует как глобальная переменная)
     var dayContextMenu
     var contextMenuExists = false
-    if (schedule.contextMenu) {
-        dayContextMenu = schedule.contextMenu
-    }
-    else{
+    if (schedule.contextMenu === 'default') {
         dayContextMenu = [
             {
                 text: "Создать",
@@ -34,6 +31,12 @@ function DrawSchedule(schedule)
                 lClick: function(){ console.log('Context button', "Удалить");}
             }
         ];
+    }
+    else if (schedule.contextMenu) {
+        dayContextMenu = schedule.contextMenu
+    }    
+    else {
+        dayContextMenu = null
     }
 
     //При перетаскивании элемента хранит данные о старом месте    
@@ -97,8 +100,11 @@ function DrawSchedule(schedule)
             timeZone.setAttribute('childnumber', i+1)        
             // timeZone.addEventListener('click', schedule.scheduleEvents.lClick);
             timeZone.addEventListener('click', addNewEvent);
-            // timeZone.addEventListener('contextmenu', schedule.scheduleEvents.rClick);
-            timeZone.addEventListener('contextmenu', DrawContextMenu);
+            // timeZone.addEventListener('contextmenu', schedule.scheduleEvents.rClick);  
+            if (schedule.contextMenu) {
+                timeZone.addEventListener('contextmenu', DrawContextMenu);
+            }          
+            
             timeZone.style = 'min-height: 3.2rem;';
             movedEventDuplicate
             eventsColumn.append(timeZone);
