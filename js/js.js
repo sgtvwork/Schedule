@@ -528,56 +528,6 @@ function DrawSchedule(schedule)
         }        
     }
 
-    //Отрисовка блока нового события
-    function createEventDiv (e, width) {
-        let target = e.target.closest('.ScheduleDay')    
-        let start_x = e.pageX - target.getBoundingClientRect().left
-        let dateStart = new Date( $(target).find('input[name="Date"]').val() ).toLocaleDateString()
-        
-        let leftPrc = start_x * 100 / $('.ScheduleDay').width()
-        let widthPrc = width * 100 / $('.ScheduleDay').width()
-
-        let ghostEvent = $('<div>', {
-            class: 'EventDetailContainer ',
-        }).css({
-            // left: start_x +'px', 
-            top: 0.1 + 'rem',
-            // width: width + 'px'
-            left: leftPrc,
-            width: widthPrc
-        });
-
-        let startEventWidth = $(ghostEvent).width()
-
-        let eventInner = $('<div>', {
-            class: 'EventDetail'
-        }).attr('data-bs-toggle', 'tooltip')
-        .attr('data-bs-original-title', 'Новое событие')
-        
-        let innerText = $('<p>', {
-            class: 'm-0 p-0 overflow-hidden text-nowrap fw-bold fs-6'
-        }).html('Новое мероприятие')     
-        
-        $(ghostEvent).append(eventInner)
-        let res = getEventDates(ghostEvent, target, width)
-        let innerDate = $('<p>', {
-            class: 'm-0 p-0 overflow-hidden text-nowrap fs-6'
-        }).html(res)
-
-        $(eventInner).append(innerText).append(innerDate)
-
-        $(ghostEvent).resizable({
-            resizeWidth: true,
-            resizeHeight: false,
-            onDragStart: null,            
-            onDragEnd: null,            
-            onDrag: null,           
-            eventMinWidth: 4
-        });
-        
-        return ghostEvent
-    }
-
     //Получение диапазона дат для нового события
     function getEventDates(event, target, startEventWidth){
         
@@ -623,6 +573,7 @@ function DrawSchedule(schedule)
             case '12': return short === true ? 'ДЕК' : 'декабря';
         }
     }
+
     function isChillDay(d, m, y) {
         let days = [0, 1, 2, 3, 4, 5, 6];
         let date = new Date(`${d}-${m}-${y}`)
