@@ -87,13 +87,10 @@ function DrawSchedule(schedule)
 
         //Уже отрисованные элементы в этой строке (нужен для определения отступа сверху)
         var alreadyPushedEvents = [];
-        
-        console.log(schedule.events)
-        
+                
         //Цикл отрисовки сетки дней
         for(var i = 0; i < daysDifference; i++){
-            console.log('date1', moment(date).format('DD.MM.YYYY HH.mm.ss'));
-
+            
             //Колонка день
             var timeZone = document.createElement('li');
             timeZone.classList = 'ScheduleDay';    
@@ -124,8 +121,6 @@ function DrawSchedule(schedule)
                 && x.start >= moment(date).startOf('day')
                 && x.start <= moment(date).endOf('day')
             );
-
-            console.log(events)
 
             //Получаем список событий начинающийся в этот день и ранее (если начало выходит за диапазон отрисовки)
             if(i == 0){
@@ -210,111 +205,13 @@ function DrawSchedule(schedule)
 
                     //#region drag events
                     
-                    var oldEventParams;
-                    var currentDroppable;
-                    var isDragging = false;
-                    var draggingElement;
+                    addEventListners(eventProgress, currEvent);
 
-                    $(eventProgress).off('mousedown').on('mousedown', function(e){ 
-                        
-                        [].slice.call(scheduleContainer.querySelectorAll('[data-bs-toggle="tooltip"]')).map(function (tooltipTriggerEl) {
-                            new bootstrap.Tooltip(tooltipTriggerEl).disable();
-                        });
-
-                        $('.tooltip').hide();
-                        
-                        draggingElement = $(this);
-                        
-                        isDragging = true; 
-                        
-                        oldEventParams = {
-                            parent: $(draggingElement).closest('.ScheduleDay')[0],
-                            style: $(draggingElement).parents('.EventDetailContainer:first').attr('style')
-                        };
-
-                        $(draggingElement).addClass('movedEvent');
-                        $(draggingElement).parents('.ScheduleDay:first').addClass('OldDropablePoint');
-                        $(draggingElement).parents('.EventDetailContainer:first').css('width', $(draggingElement).parents('.EventDetailContainer:first').css('width'));
-                        
-                        $(document).on('mousemove', function(event) {
-                            
-                            if(!isDragging){
-                                document.removeEventListener('mousemove', event);
-                                return;
-                            }
-
-                            const xPositionDifference = event.pageX - draggingElement.offset().left;
-                            const yPositionDifference = event.pageY - draggingElement.offset().top;
-                            
-                            $(draggingElement).parents('.EventDetailContainer:first').offset({
-                                top: event.pageY - yPositionDifference,
-                                left: event.pageX - xPositionDifference
-                            });
-                            
-                            currentDroppable = $(document.elementFromPoint(event.clientX, event.clientY)).closest('.ScheduleDay');
-                                                    
-                            $('.DropablePoint').removeClass('DropablePoint');
-                            
-                            if (currentDroppable.length > 0) {
-                                currentDroppable.addClass('DropablePoint');
-                                currentDroppable.append($(draggingElement).parents('.EventDetailContainer:first').detach());
-                            }
-                        });
-                    }); 
-
-                    $(document).on('mouseup',function(e){ 
-                        
-                        if(!isDragging || draggingElement == undefined || draggingElement == null || oldEventParams == undefined){
-                            return;
-                        }
-
-                        isDragging = false;
-                        
-                        $('.OldDropablePoint').removeClass('OldDropablePoint');
-                        $('.DropablePoint').removeClass('DropablePoint');
-                        $('.movedEvent').removeClass('movedEvent');
-
-                        document.removeEventListener('mousemove',function(e){}); 
-
-                        [].slice.call(scheduleContainer.querySelectorAll('[data-bs-toggle="tooltip"]')).map(function (tooltipTriggerEl) {
-                            new bootstrap.Tooltip(tooltipTriggerEl).enable();
-                        });
-
-                        if(oldEventParams == undefined){
-                            return;
-                        }
-
-                        $(eventProgress).parents('.EventDetailContainer:first').attr('style', oldEventParams.style);
-                        
-                        var eventStart = moment(currEvent.start);
-                        var eventEnd = moment(currEvent.end);
-                        var prevContainerDate = moment(currEvent.start).startOf('day');
-                        var newContainerDate = moment($(eventProgress).parents('.ScheduleDay:first').find('input[name="Date"]').val()).startOf('day');
-
-                        var daysDiff = newContainerDate.diff(prevContainerDate, 'days');
-                        var duration = moment.duration(eventEnd.diff(eventStart));
-
-                        currEvent.start = eventStart.add(daysDiff, 'days');
-                        currEvent.end = currEvent.start.clone().add(duration);
-
-                        var newLocationId = parseInt($(eventProgress).parents('.ScheduleDay:first').find('input[name="LocationId"]').val());
-                        var prevLocationId = parseInt($(oldEventParams.parent).find('input[name="LocationId"]').val());
-                        currEvent.locationId = newLocationId;
-
-                        console.log('oldEventParams', oldEventParams)
-                        console.log('prevLocationId', prevLocationId, 'newLocationId', newLocationId)
-
-                        RedrawRow(prevLocationId);
-                        RedrawRow(newLocationId);
-
-                        oldEventParams = null;
-                    });
-
+                    
                     //#endregion drag events
 
                 }
             }
-            console.log('date2', moment(date).format('DD.MM.YYYY HH.mm.ss'));
 
             date = moment(date).startOf('day').add('1', 'day');
         }
@@ -352,8 +249,117 @@ function DrawSchedule(schedule)
         //#endregion
     }
 
+    function addEventListners(eventProgress, currEvent){
+               
+        var oldEventParams;
+        var currentDroppable;
+        var isDragging = false;
+        var draggingElement;
+
+        $(eventProgress).off('mousedown').on('mousedown', function(e){ 
+            
+            [].slice.call(scheduleContainer.querySelectorAll('[data-bs-toggle="tooltip"]')).map(function (tooltipTriggerEl) {
+                new bootstrap.Tooltip(tooltipTriggerEl).disable();
+            });
+
+            $('.tooltip').hide();
+            
+            draggingElement = $(this);
+            
+            isDragging = true; 
+            
+            oldEventParams = {
+                parent: $(draggingElement).closest('.ScheduleDay')[0],
+                style: $(draggingElement).parents('.EventDetailContainer:first').attr('style')
+            };
+
+            $(draggingElement).addClass('movedEvent');
+            $(draggingElement).parents('.ScheduleDay:first').addClass('OldDropablePoint');
+            $(draggingElement).parents('.EventDetailContainer:first').css('width', $(draggingElement).parents('.EventDetailContainer:first').css('width'));
+            
+            $(document).on('mousemove', function(event) {
+                
+                if(!isDragging){
+                    document.removeEventListener('mousemove', event);
+                    return;
+                }
+
+                const xPositionDifference = event.pageX - draggingElement.offset().left;
+                const yPositionDifference = event.pageY - draggingElement.offset().top;
+                
+                $(draggingElement).parents('.EventDetailContainer:first').offset({
+                    top: event.pageY - yPositionDifference,
+                    left: event.pageX - xPositionDifference
+                });
+                
+                currentDroppable = $(document.elementFromPoint(event.clientX, event.clientY)).closest('.ScheduleDay');
+
+                //currEvent.locationId = $(currentDroppable).find('input[name="LocationId"]').val();
+                console.log('currEvent.locationId', currEvent.locationId, $(currentDroppable).find('input[name="LocationId"]').val())
+                $('.DropablePoint').removeClass('DropablePoint');
+                
+                if (currentDroppable.length > 0) {
+                    currentDroppable.addClass('DropablePoint');
+                    currentDroppable.append($(draggingElement).parents('.EventDetailContainer:first').detach());
+                }
+            });
+        }); 
+
+        $(document).on('mouseup',function(e){ 
+            
+            if(!isDragging || draggingElement == undefined || draggingElement == null || oldEventParams == undefined){
+                return;
+            }
+
+            isDragging = false;
+            
+            $('.OldDropablePoint').removeClass('OldDropablePoint');
+            $('.DropablePoint').removeClass('DropablePoint');
+            $('.movedEvent').removeClass('movedEvent');
+
+            document.removeEventListener('mousemove',function(e){}); 
+
+            [].slice.call(scheduleContainer.querySelectorAll('[data-bs-toggle="tooltip"]')).map(function (tooltipTriggerEl) {
+                new bootstrap.Tooltip(tooltipTriggerEl).enable();
+            });
+
+            if(oldEventParams == undefined){
+                return;
+            }
+
+            $(eventProgress).parents('.EventDetailContainer:first').attr('style', oldEventParams.style);
+            
+            var eventStart = moment(currEvent.start);
+            var eventEnd = moment(currEvent.end);
+            var prevContainerDate = moment(currEvent.start).startOf('day');
+            var newContainerDate = moment($(eventProgress).parents('.ScheduleDay:first').find('input[name="Date"]').val()).startOf('day');
+
+            var daysDiff = newContainerDate.diff(prevContainerDate, 'days');
+            var duration = moment.duration(eventEnd.diff(eventStart));
+
+            currEvent.start = eventStart.add(daysDiff, 'days');
+            currEvent.end = currEvent.start.clone().add(duration);
+
+            var newLocationId = parseInt($(eventProgress).parents('.ScheduleDay:first').find('input[name="LocationId"]').val());
+            var prevLocationId = parseInt($(oldEventParams.parent).find('input[name="LocationId"]').val());
+            currEvent.locationId = newLocationId;
+
+            console.log('oldEventParams', oldEventParams)
+            console.log('prevLocationId', prevLocationId, 'newLocationId', newLocationId)
+            console.log('currEvent.locationId', currEvent)
+            
+            RedrawRow(newLocationId);
+            RedrawRow(prevLocationId);
+
+            oldEventParams = null;
+            console.log('mouseup end');
+
+        });
+
+        delete eventProgress;
+    }
+
     function RedrawRow(locationId){
-        console.log('locid', locationId)
         var $currentRow = $('input[name="LocationId"][value="' + locationId + '"]:first', scheduleContainer).parents('.LocationRow');
         $currentRow.replaceWith(GetLocationRow(locationId));
         // schedule.scheduleEvents.drawEnd();
