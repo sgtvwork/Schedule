@@ -1,10 +1,11 @@
 //Отрисовывает шахматку и возвращает как html объект
 function DrawSchedule(schedule)
 {
-    console.log('schedule', schedule);
+    schedule.start = moment(schedule.start).startOf('day');
+    schedule.end = moment(schedule.end).endOf('day');
 
     //Контекстное меню (Пока не помещал в общий объект, существует как глобальная переменная)
-    var dayContextMenu
+    var dayContextMenu;
     var contextMenuExists = false
     if (schedule.contextMenu === 'default') {
         dayContextMenu = [
@@ -38,9 +39,6 @@ function DrawSchedule(schedule)
     else {
         dayContextMenu = null
     }
-
-    //При перетаскивании элемента хранит данные о старом месте    
-    var movedEventDuplicate;
      
     //Главный блок 
     var scheduleContainer = document.createElement('div');
@@ -97,16 +95,14 @@ function DrawSchedule(schedule)
             //Колонка день
             var timeZone = document.createElement('li');
             timeZone.classList = 'ScheduleDay';    
-            timeZone.setAttribute('childnumber', i+1)        
-            // timeZone.addEventListener('click', schedule.scheduleEvents.lClick);
+            timeZone.setAttribute('childnumber', i+1);
             timeZone.addEventListener('click', addNewEvent);
-            // timeZone.addEventListener('contextmenu', schedule.scheduleEvents.rClick);  
+
             if (schedule.contextMenu) {
                 timeZone.addEventListener('contextmenu', DrawContextMenu);
             }          
             
             timeZone.style = 'min-height: 3.2rem;';
-            movedEventDuplicate
             eventsColumn.append(timeZone);
             
             var dateInfo = document.createElement('input');
@@ -212,7 +208,6 @@ function DrawSchedule(schedule)
                     //#region drag events
                     
                     addEventListners(eventProgress, currEvent);
-
                     
                     //#endregion drag events
 
@@ -226,27 +221,17 @@ function DrawSchedule(schedule)
         $(eventRow).find('.EventDetailContainer').resizableSafe({
             resizeWidth: true,
             resizeHeight: false,
-            onDragStart: schedule.scheduleEvents.onResizeStart !== null ? schedule.scheduleEvents.onResizeStart : null,       // hook into start drag operation (event,$el,opt passed - return false to abort drag)           
-            onDragEnd: null,        // hook into stop drag operation (event,$el,opt passed)        
-            onDrag: schedule.scheduleEvents.onResize !== null ? schedule.scheduleEvents.onResize : null,           // hook into each drag operation (event,$el,opt passed)
-            eventMinWidth: 4,        // in hours
+            onDragStart: schedule.scheduleEvents.onResizeStart !== null ? schedule.scheduleEvents.onResizeStart : null,
+            onDragEnd: null,
+            onDrag: schedule.scheduleEvents.onResize !== null ? schedule.scheduleEvents.onResize : null,
+            eventMinWidth: 4,
             redrawFunc: function (locationId, data) {
-                console.log('fijsffhk',data)
 
                 var event = schedule.events.find(x => x.id === data.eventId);
                 event.start = data.startDate;
                 event.end = data.endDate;
-                console.log(schedule)
-                // const index = schedule.events.findIndex(x => x.id === data.eventId)
-                // if (index !== -1) {
-                //     const newElem = { 
-                //         ...schedule.events[index],
-                //         end: data.endDate,
-                //         start: data.startDate
-                //     }
-                //     schedule.events[index] = newElem
-                // }
-                RedrawRow(locationId)
+                
+                RedrawRow(locationId);
             }
         });
 
@@ -300,8 +285,6 @@ function DrawSchedule(schedule)
                 
                 currentDroppable = $(document.elementFromPoint(event.clientX, event.clientY)).closest('.ScheduleDay');
 
-                //currEvent.locationId = $(currentDroppable).find('input[name="LocationId"]').val();
-                console.log('currEvent.locationId', currEvent.locationId, $(currentDroppable).find('input[name="LocationId"]').val())
                 $('.DropablePoint').removeClass('DropablePoint');
                 
                 if (currentDroppable.length > 0) {
@@ -349,17 +332,11 @@ function DrawSchedule(schedule)
             var newLocationId = parseInt($(eventProgress).parents('.ScheduleDay:first').find('input[name="LocationId"]').val());
             var prevLocationId = parseInt($(oldEventParams.parent).find('input[name="LocationId"]').val());
             currEvent.locationId = newLocationId;
-
-            console.log('oldEventParams', oldEventParams)
-            console.log('prevLocationId', prevLocationId, 'newLocationId', newLocationId)
-            console.log('currEvent.locationId', currEvent)
             
             RedrawRow(newLocationId);
             RedrawRow(prevLocationId);
 
             oldEventParams = null;
-            console.log('mouseup end');
-
         });
 
         delete eventProgress;
@@ -368,7 +345,6 @@ function DrawSchedule(schedule)
     function RedrawRow(locationId){
         var $currentRow = $('input[name="LocationId"][value="' + locationId + '"]:first', scheduleContainer).parents('.LocationRow');
         $currentRow.replaceWith(GetLocationRow(locationId));
-        // schedule.scheduleEvents.drawEnd();
     }
 
     function GetScheduleHeader(daysDifference){
@@ -430,7 +406,7 @@ function DrawSchedule(schedule)
     function DrawContextMenu(){
 
         $('.daysContextMenu').remove();
-        contextMenuExists = false
+        contextMenuExists = false;
 
         var menuContainer = $('<div>',{
             class: 'list-group daysContextMenu',
@@ -460,7 +436,7 @@ function DrawSchedule(schedule)
         }
 
         $('body').append(menuContainer);
-        contextMenuExists = true
+        contextMenuExists = true;
         return false
     }
 
@@ -502,28 +478,6 @@ function DrawSchedule(schedule)
                 schedule.scheduleEvents.onCreateEvent(eventObj);
                 
                 return;
-
-                //let width = 50;
-                //let ghostEvent = createEventDiv(e, width);
-                // $(target).append(ghostEvent)
-                // console.log('event created')
-                
-                // //пока отключил
-                // //$(document).on('mousemove', rendering)
-                // //$(document).on('mouseup', renderStop)
-
-                // function rendering(e){        
-                //     console.log('rendering')
-                //     let wdth = $(ghostEvent).width()
-                //     $(ghostEvent).css('width', wdth + 1 + 'px')
-                // }
-                // function renderStop(e){
-                //     console.log('render stop')
-                //     e.stopPropagation();
-                //     e.preventDefault();
-                //     $(document).off('mousemove', rendering);
-                //     $(document).off('mouseup', renderStop);
-                // }
             }            
         }        
     }
