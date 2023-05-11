@@ -101,11 +101,20 @@
 
 .DropablePoint{
     background-color: lightgreen !important;
+}
 
-    /* background-image: url('https://www.meme-arsenal.com/memes/13ef4ecb4e4cc76ecf441a6826511f2c.jpg');
+.DropableGoblin{
+    background-image: url('https://www.meme-arsenal.com/memes/13ef4ecb4e4cc76ecf441a6826511f2c.jpg');
     background-position: center;
     background-size: cover;
-    background-repeat: no-repeat; */
+    background-repeat: no-repeat;
+}
+
+.OldDropableGoblin{
+    background-image: url('https://www.meme-arsenal.com/memes/2a963bfd251ad05f16f827fa972498b8.jpg');
+    background-position: center;
+    background-size: cover;
+    background-repeat: no-repeat;
 }
 
 .movedEvent{
