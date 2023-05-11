@@ -10,8 +10,12 @@
     padding-left: 0.5rem;
 }
 
-.LocationRow{
+.LocationRow, .HeaderRow{
     border: 1px solid #F5F5F5;
+}
+
+.HeaderRow, .GridHeader{
+    z-index: 3;
 }
 
 .LocationsContainer{
@@ -129,4 +133,14 @@
 
 .OldDropablePoint{
     background-color: coral;
+}
+
+.todayLine{
+    border-left: 2px dashed red;
+    height: 100%;
+    position: absolute;
+    margin-left: -1px;
+    top: 0;
+    opacity: .5;
+    z-index: 2;
 }
