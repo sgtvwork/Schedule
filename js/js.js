@@ -4,6 +4,8 @@ function DrawSchedule(schedule)
     schedule.start = moment(schedule.start).startOf('day');
     schedule.end = moment(schedule.end).endOf('day');
 
+    if(scheduleVariable.goblin == undefined) scheduleVariable.goblin = false;
+
     //Контекстное меню (Пока не помещал в общий объект, существует как глобальная переменная)
     var dayContextMenu;
     var contextMenuExists = false
@@ -265,7 +267,7 @@ function DrawSchedule(schedule)
             };
 
             $(draggingElement).addClass('movedEvent');
-            $(draggingElement).parents('.ScheduleDay:first').addClass('OldDropablePoint');
+            $(draggingElement).parents('.ScheduleDay:first').addClass(schedule.goblin ? 'OldDropableGoblin' : 'OldDropablePoint');
             $(draggingElement).parents('.EventDetailContainer:first').css('width', $(draggingElement).parents('.EventDetailContainer:first').css('width'));
             
             $(document).on('mousemove', function(event) {
@@ -285,10 +287,10 @@ function DrawSchedule(schedule)
                 
                 currentDroppable = $(document.elementFromPoint(event.clientX, event.clientY)).closest('.ScheduleDay');
 
-                $('.DropablePoint').removeClass('DropablePoint');
+                $('.' + (schedule.goblin ? 'DropableGoblin' : 'DropablePoint')).removeClass(schedule.goblin ? 'DropableGoblin' : 'DropablePoint');
                 
                 if (currentDroppable.length > 0) {
-                    currentDroppable.addClass('DropablePoint');
+                    currentDroppable.addClass(schedule.goblin ? 'DropableGoblin' : 'DropablePoint');
                     currentDroppable.append($(draggingElement).parents('.EventDetailContainer:first').detach());
                 }
             });
@@ -302,8 +304,8 @@ function DrawSchedule(schedule)
 
             isDragging = false;
             
-            $('.OldDropablePoint').removeClass('OldDropablePoint');
-            $('.DropablePoint').removeClass('DropablePoint');
+            $('.' + (schedule.goblin ? 'OldDropableGoblin' : 'OldDropablePoint')).removeClass((schedule.goblin ? 'OldDropableGoblin' : 'OldDropablePoint'));
+            $('.' + (schedule.goblin ? 'DropableGoblin' : 'DropablePoint')).removeClass(schedule.goblin ? 'DropableGoblin' : 'DropablePoint');
             $('.movedEvent').removeClass('movedEvent');
 
             document.removeEventListener('mousemove',function(e){}); 
