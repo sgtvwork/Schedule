@@ -1,7 +1,8 @@
 //Отрисовывает шахматку и возвращает как html объект
 function DrawSchedule(schedule)
 {
-    schedule.start = moment(schedule.start).startOf('day');
+    schedule.start = mom
+    ent(schedule.start).startOf('day');
     schedule.end = moment(schedule.end).endOf('day');
 
     if(scheduleVariable.goblin != true) scheduleVariable.goblin = false;
@@ -54,8 +55,6 @@ function DrawSchedule(schedule)
 console.log('25 + ((75/' + daysDifference + ')*(' + (moment().startOf('day').diff(moment(schedule.start).startOf('day'), 'days')) + '))=',25 + ((75/daysDifference) * (moment().startOf('day').diff(moment(schedule.start).startOf('day'), 'days'))));
 
     if(moment().startOf('day') >= schedule.start && moment().startOf('day') <= schedule.end){
-
-
 
         var todayLine = document.createElement('div');
         todayLine.classList = 'todayLine';
