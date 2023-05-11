@@ -4,7 +4,7 @@ function DrawSchedule(schedule)
     schedule.start = moment(schedule.start).startOf('day');
     schedule.end = moment(schedule.end).endOf('day');
 
-    if(scheduleVariable.goblin == undefined) scheduleVariable.goblin = false;
+    if(scheduleVariable.goblin != true) scheduleVariable.goblin = false;
 
     //Контекстное меню (Пока не помещал в общий объект, существует как глобальная переменная)
     var dayContextMenu;
@@ -50,6 +50,21 @@ function DrawSchedule(schedule)
     
     //Отрисовка шапки
     scheduleContainer.append(GetScheduleHeader(daysDifference));
+
+console.log('25 + ((75/' + daysDifference + ')*(' + (moment().startOf('day').diff(moment(schedule.start).startOf('day'), 'days')) + '))=',25 + ((75/daysDifference) * (moment().startOf('day').diff(moment(schedule.start).startOf('day'), 'days'))));
+
+    if(moment().startOf('day') >= schedule.start && moment().startOf('day') <= schedule.end){
+
+
+
+        var todayLine = document.createElement('div');
+        todayLine.classList = 'todayLine';
+        todayLine.style.left = 25 
+        + ((75/daysDifference) * (moment().startOf('day').diff(moment(schedule.start).startOf('day'), 'days'))) 
+        + (((75/daysDifference)/1440) * (moment().diff(moment().startOf('day'), 'minutes')))
+        + '%';
+        scheduleContainer.append(todayLine);
+    }
     
     //Отрисовка помещений и событий
     for(var l = 0; l < schedule.locations.length; l++){
@@ -98,7 +113,7 @@ function DrawSchedule(schedule)
             var timeZone = document.createElement('li');
             timeZone.classList = 'ScheduleDay';    
             timeZone.setAttribute('childnumber', i+1);
-            timeZone.addEventListener('click', addNewEvent);
+            timeZone.addEventListener('click', AddNewEvent);
 
             if (schedule.contextMenu) {
                 timeZone.addEventListener('contextmenu', DrawContextMenu);
@@ -209,7 +224,7 @@ function DrawSchedule(schedule)
 
                     //#region drag events
                     
-                    addEventListners(eventProgress, currEvent);
+                    AddEventListners(eventProgress, currEvent);
                     
                     //#endregion drag events
 
@@ -237,12 +252,16 @@ function DrawSchedule(schedule)
             }
         });
 
+        [].slice.call(eventRow.querySelectorAll('[data-bs-toggle="tooltip"]')).map(function (tooltipTriggerEl) {
+            new bootstrap.Tooltip(tooltipTriggerEl).enable();
+        });
+
         return eventRow;
 
         //#endregion
     }
 
-    function addEventListners(eventProgress, currEvent){
+    function AddEventListners(eventProgress, currEvent){
                
         var oldEventParams;
         var currentDroppable;
@@ -353,7 +372,7 @@ function DrawSchedule(schedule)
 
         //Строка шапки
         var eventRowHeader = document.createElement('div');
-        eventRowHeader.classList = 'row LocationRow';
+        eventRowHeader.classList = 'row HeaderRow';
 
         //Помещение
         var locationDivHeader = document.createElement('div');
@@ -381,9 +400,9 @@ function DrawSchedule(schedule)
             timeZoneHeader.classList = 'headerDay text-center';
             let currentDate = moment(headerDate).format('DD.MM.YYYY').toString();
             let array = currentDate.split('.')
-            let shortName = monthInText(array[1], true)
-            let longName = monthInText(array[1], false)
-            let isChill = isChillDay(array[2], array[1], array[0])
+            let shortName = MonthInText(array[1], true)
+            let longName = MonthInText(array[1], false)
+            let isChill = IsChillDay(array[2], array[1], array[0])
             if (isChill) {
                 timeZoneHeader.innerHTML = 
                     `<span style="color:red;font-weight:500">${array[0]}</span><br><span style="font-size:12px">${shortName}</span>`            
@@ -457,7 +476,7 @@ function DrawSchedule(schedule)
     });
 
     //Добавление нового события на таймлайн
-    function addNewEvent(e) {
+    function AddNewEvent(e) {
         if (e.target.className === 'ScheduleDay') {
             if (!contextMenuExists) {
                 let $target = $(e.target).closest('.ScheduleDay');
@@ -485,7 +504,7 @@ function DrawSchedule(schedule)
     }
 
     //Вспомогательные функции для дат в отрисовке шапки
-    function monthInText(str, short) {
+    function MonthInText(str, short) {
         switch (str) {
             case '01': return short === true ? 'ЯНВ' : 'января';
             case '02': return short === true ? 'ФЕВ' : 'февраля';
@@ -502,7 +521,7 @@ function DrawSchedule(schedule)
         }
     }
 
-    function isChillDay(d, m, y) {
+    function IsChillDay(d, m, y) {
         let days = [0, 1, 2, 3, 4, 5, 6];
         let date = new Date(`${d}-${m}-${y}`)
         var n = date.getDay();
@@ -513,11 +532,11 @@ function DrawSchedule(schedule)
     }
 
     //Включаю все подсказки при наведении
-    var tooltipTriggerList = [].slice.call(scheduleContainer.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    // var tooltipTriggerList = [].slice.call(scheduleContainer.querySelectorAll('[data-bs-toggle="tooltip"]'));
     
-    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-        return new bootstrap.Tooltip(tooltipTriggerEl)
-    });
+    // var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+    //     return new bootstrap.Tooltip(tooltipTriggerEl)
+    // });
 
     $('.tooltip').hide();
 
