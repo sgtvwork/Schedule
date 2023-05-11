@@ -50,7 +50,9 @@
 
             var startPos, startTransition;
            
-
+            var resizeStep = 12
+            var stepStart = null
+            var step = null
             // Current element to resize
             var $el = $(this);
             // Get both of left and right handles
@@ -74,6 +76,10 @@
             function mouseDown (e){
                 whichHandle = e.target.className
                 e.preventDefault()
+
+                stepStart = $('.ScheduleDay').width() / 24 * resizeStep; 
+                step = stepStart
+
                 original_width = parseFloat($el.width());
                 original_x = Number($($el).css('left').replace('px',''))
                 original_mouse_x = e.pageX;
@@ -89,7 +95,6 @@
 
             resizerL.on("mousedown." + opt.instanceId, mouseDown);
             resizerR.on("mousedown." + opt.instanceId, mouseDown);
-
             function resize (e){
                 let dayWidth = $('.ScheduleDay').width()
                 let minWidth = dayWidth / options.eventMinWidth
@@ -107,7 +112,7 @@
                 let commonwidth = dayWidth * daysNumber.length             
                 let leftBorder = fullDaysBeforeEvent * dayWidth                
                 let leftRange = original_width + leftBorder + original_x 
-                let rightRange = (commonwidth - leftBorder - original_x) 
+                let rightRange = (commonwidth - leftBorder - original_x)                 
                 
                 if (whichHandle.indexOf('stickL') !== -1) {
                     const width = original_width - (e.pageX - original_mouse_x)
@@ -123,20 +128,29 @@
                         else {
                             newLeftPrc = (original_x + (e.pageX - original_mouse_x)) * leftPrc / original_x
                         }
-                        
 
-                        // $el[0].style.width = width + 8 + 'px'
-                        $el[0].style.width = prc + '%'
-                        // $el[0].style.left = original_x + (e.pageX - original_mouse_x) + 'px'                    
-                        $el[0].style.left = newLeftPrc + '%'                    
+                        let check = (original_width - width)
+                        console.log(check, step)
+                        if (Math.abs(check) > step) {
+                            step += stepStart
+                            // $el[0].style.width = width + 8 + 'px'
+                            $el[0].style.width = prc + '%'
+                            // $el[0].style.left = original_x + (e.pageX - original_mouse_x) + 'px'                    
+                            $el[0].style.left = newLeftPrc + '%'       
+                        }                                     
                     }
                 }
                 else if (whichHandle.indexOf('stickR') !== -1) {
                     const width = original_width + (e.pageX - original_mouse_x);
                     if (width >= minWidth && width <= rightRange) {
-                        let prc = 100 * width / $('.ScheduleDay').width()
-                        // $el[0].style.width = width + 'px'
-                        $el[0].style.width = prc + '%'
+                        let check = (original_width - width)
+                        console.log(check, step)
+                        if (Math.abs(check) > step) {
+                            step += stepStart
+                            let prc = 100 * width / $('.ScheduleDay').width()
+                            // $el[0].style.width = width + 'px'
+                            $el[0].style.width = prc + '%'  
+                        }
                     }                    
                 } 
 
