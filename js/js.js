@@ -226,13 +226,12 @@ function DrawSchedule(schedule)
             onDragStart: schedule.scheduleEvents.onResizeStart !== null ? schedule.scheduleEvents.onResizeStart : null,
             onDragEnd: null,
             onDrag: schedule.scheduleEvents.onResize !== null ? schedule.scheduleEvents.onResize : null,
-            eventMinWidth: 4,
+            eventMinWidth: schedule.eventMinWidth,
+            resizeStep: schedule.resizeStep,
             redrawFunc: function (locationId, data) {
-
                 var event = schedule.events.find(x => x.id === data.eventId);
                 event.start = data.startDate;
                 event.end = data.endDate;
-                
                 RedrawRow(locationId);
             }
         });
@@ -470,7 +469,7 @@ function DrawSchedule(schedule)
                     name: "Событие " + eventId,
                     extClass: "",
                     start: moment($target.find('input[name="Date"]').val()).startOf('day').hour(9),
-                    end: moment($target.find('input[name="Date"]').val()).startOf('day').hour(18)
+                    end: moment($target.find('input[name="Date"]').val()).startOf('day').hour(9 + schedule.eventMinWidth)
                 };
                 
                 schedule.events.push(eventObj);
