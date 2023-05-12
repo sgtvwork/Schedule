@@ -195,7 +195,8 @@
             target: 'both',
             disabled: false,
             onClick: function (e) {
-                alert("Я бесполезен, отстань")
+                alert("Я бесполезен, отстань");
+                Never(true);
             }
         }
     ]
@@ -203,8 +204,8 @@
     //Основной объект, на основе него идет отрисовка
     var scheduleVariable = {
         title: 'Комнаты / Даты',
-        start: moment().startOf('day'),
-        end: moment().endOf('day').add('5', 'day'),
+        start: moment().startOf('day').add('-12', 'day'),
+        end: moment().endOf('day').add('20', 'day'),
         locations: locations,
         events: events,
         scheduleEvents: scheduleEvents,

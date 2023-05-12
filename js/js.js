@@ -8,582 +8,608 @@ function DrawSchedule(scheduleData)
         locations: scheduleData.locations != undefined && scheduleData.locations.length > 0 ? scheduleData.locations : [],
         events: scheduleData.events != undefined && scheduleData.events.length > 0 ? scheduleData.events : [],
         scheduleEvents: scheduleData.scheduleEvents,
-        contextMenu: scheduleData.cMenu,
+        contextMenu: scheduleData.contextMenu,
         resizeStep: scheduleData.resizeStep != undefined && scheduleData.resizeStep > 0 ? parseInt(scheduleData.resizeStep) : 1,
         eventMinWidth: scheduleData.eventMinWidth != undefined && scheduleData.eventMinWidth > 0 ? parseInt(scheduleData.eventMinWidth) : 1,
         goblin: scheduleData.goblin != true ? false : scheduleData.goblin
     }
-    
-    //Контекстное меню 
-    var lastContextMenuTarget
-    var defaultContextMenu = [
-        {
-            text: 'Создать',
-            target: 'both',
-            disabled: false,
-            onClick: function (e) {
-                AddNewEvent(e)
-            }
-        },
-        {
-            text: 'Изменить',
-            target: 'event',
-            disabled: false,
-            onClick: function (e) {
-                alert('Не сегодня, дружок-пирожок')
-            }
-        },
-        {
-            text: 'Клонировать',
-            target: 'event',
-            disabled: true,
-            onClick: function (e) {
-                alert(e.target)
-            }
-        },
-        {
-            text: 'Удалить',
-            target: 'event',
-            disabled: false,
-            onClick: function (e) {
-                deleteEvent()
-            }
-        }
-    ];
-    var dayContextMenu;
-    var contextMenuExists = false
-    if (schedule.contextMenu === 'default') {
-        dayContextMenu = defaultContextMenu
-    }
-    else if (schedule.contextMenu) {
-        dayContextMenu = defaultContextMenu.concat(schedule.contextMenu)
-    }    
-    else {
-        dayContextMenu = null
-    }
-     
-    //Главный блок 
-    var scheduleContainer = document.createElement('div');
-    scheduleContainer.classList = 'p-0 ScheduleContainer';
-    $(scheduleContainer).on('contextmenu', function() {return false;});
-    var daysDifference = moment(schedule.end).startOf('day').diff(moment(schedule.start).startOf('day'), 'days') + 1; 
-    
-    //Отрисовка шапки
-    scheduleContainer.append(GetScheduleHeader(daysDifference));
 
-console.log('25 + ((75/' + daysDifference + ')*(' + (moment().startOf('day').diff(moment(schedule.start).startOf('day'), 'days')) + '))=',25 + ((75/daysDifference) * (moment().startOf('day').diff(moment(schedule.start).startOf('day'), 'days'))));
-
-    if(moment().startOf('day') >= schedule.start && moment().startOf('day') <= schedule.end){
-
-        var todayLine = document.createElement('div');
-        todayLine.classList = 'todayLine';
-        todayLine.style.left = 25 
-        + ((75/daysDifference) * (moment().startOf('day').diff(moment(schedule.start).startOf('day'), 'days'))) 
-        + (((75/daysDifference)/1440) * (moment().diff(moment().startOf('day'), 'minutes')))
-        + '%';
-        scheduleContainer.append(todayLine);
-    }
-    
-    //Отрисовка помещений и событий
-    for(var l = 0; l < schedule.locations.length; l++){
-        scheduleContainer.append(GetLocationRow(schedule.locations[l].id));
-    }
-
-    function GetLocationRow(locationId){
-
-        var location = schedule.locations.find(x=>x.id == locationId);
-
-        //#region Левая колонка
-        //Строка помещения
-        var eventRow = document.createElement('div');
-        eventRow.classList = 'row LocationRow';
-
-        //Помещение
-        var locationDiv = document.createElement('div');
-        locationDiv.classList = 'col-3 LocationsContainer';
-        $(locationDiv).append(location.name);
-        eventRow.append(locationDiv);
-        
-        //Id помещения
-        var locationInput= document.createElement('input');            
-        locationInput.name = 'LocationId';
-        locationInput.type = "hidden";
-        locationInput.value = location.id;
-        locationDiv.append(locationInput);
-
-        //#endregion
-
-        //#region Правая колонка
-        //Столбец c расписанием    
-        var eventsColumn = document.createElement('div');
-        eventsColumn.classList = 'col-9 DaysContainer';
-        eventRow.append(eventsColumn);
-
-        var date = new Date(schedule.start).setHours(0, 0, 0, 0);
-
-        //Уже отрисованные элементы в этой строке (нужен для определения отступа сверху)
-        var alreadyPushedEvents = [];
-                
-        //Цикл отрисовки сетки дней
-        for(var i = 0; i < daysDifference; i++){
-            
-            //Колонка день
-            var timeZone = document.createElement('li');
-            timeZone.classList = 'ScheduleDay';    
-            timeZone.setAttribute('childnumber', i+1);
-            // timeZone.addEventListener('click', AddNewEvent);
-
-            if (schedule.contextMenu) {
-                timeZone.addEventListener('contextmenu', DrawContextMenu);
-            }          
-            
-            timeZone.style = 'min-height: 3.2rem;';
-            eventsColumn.append(timeZone);
-            
-            var dateInfo = document.createElement('input');
-            dateInfo.type = 'hidden';
-            dateInfo.name = 'Date';
-            dateInfo.value = moment(date).format('YYYY-MM-DDTHH:mm:SS.000Z'),
-            timeZone.append(dateInfo);
-
-            var locationInfo = document.createElement('input');
-            locationInfo.type = 'hidden';
-            locationInfo.name = 'LocationId';
-            locationInfo.value = location.id ;
-            timeZone.append(locationInfo);
-
-            //Получаем список событий начинающийся в этот день
-            var events = schedule.events.filter(
-                x => x.locationId == location.id 
-                && x.start >= moment(date).startOf('day')
-                && x.start <= moment(date).endOf('day')
-            );
-
-            //Получаем список событий начинающийся в этот день и ранее (если начало выходит за диапазон отрисовки)
-            if(i == 0){
-                events = schedule.events.filter(
-                    x=>x.locationId == location.id 
-                    && x.start <= moment(date).endOf('day')
-                ).sort(x=>x.start);
-            }
-            
-            //Отрисовка мероприятий в этот день
-            if(events.length > 0){
-                for(var e = 0; e < events.length; e++){
-                    
-                    var currEvent = events[e];
-
-                    //Отступ сверху
-                    var top = alreadyPushedEvents.filter(x=>x.locationId == currEvent.locationId && x.start < currEvent.end && x.end > currEvent.start).length;
-
-                    //Контейнер детали мероприятия (полоска)
-                    var eventProgressContainer = document.createElement('div');
-                    eventProgressContainer.classList = 'EventDetailContainer ' + currEvent.extClass;
-                    
-                    //Контейнер детали мероприятия (полоска)
-                    var eventProgress = document.createElement('div');
-                    eventProgress.classList = 'EventDetail ' + currEvent.extClass;
-                    eventProgress.setAttribute('data-bs-toggle','tooltip');
-                    eventProgress.setAttribute('title', currEvent.name + ' \r\n' + currEvent.start.format('DD.MM.YYYY HH:mm') + ' - ' + currEvent.end.format('DD.MM.YYYY HH:mm'));
-                   
-                    eventProgressContainer.append(eventProgress);
-                    
-                    //Расчет длины события (не лезь сюда, оно тебя сожрет) 
-                    if(currEvent.start >= schedule.start && currEvent.end <= schedule.end)
-                    {
-                        eventProgressContainer.style.width = (currEvent.end.diff(currEvent.start, 'day', true) * 100) + '%';
-                        eventProgressContainer.style.left = (currEvent.start.diff(moment(date), 'day', true) * 100) + '%';
-                    }
-                    else if(currEvent.start < schedule.start && currEvent.end > schedule.end)
-                    {
-                        eventProgressContainer.style.width = (schedule.end.diff(schedule.start.startOf('day'), 'day', true) * 100) + '%';
-                        eventProgressContainer.style.left = '0%';
-                    }
-                    else if(currEvent.start >= schedule.start )
-                    {
-                        eventProgressContainer.style.width = (schedule.end.diff(currEvent.start, 'day', true) * 100) + '%';
-                        eventProgressContainer.style.left = (currEvent.start.diff(moment(date), 'day', true) * 100) + '%';
-                    }
-                    else
-                    {
-                        eventProgressContainer.style.width = (currEvent.end.diff(schedule.start, 'day', true) * 100) + '%';
-                        eventProgressContainer.style.left = '0%';
-                    }
-
-                    eventProgressContainer.style.top = (top * 3.1 + 0.1) + 'rem';
-                    timeZone.append(eventProgressContainer);
-
-                    top++;
-
-                    //Увеличиваем "родителя"
-                    timeZone.style = 'min-height: ' + (top * 3.1 + 0.1) + 'rem;';
-
-                    //Название мероприятия
-                    var eventName = document.createElement('p');
-                    eventName.classList = 'm-0 p-0 overflow-hidden text-nowrap fw-bold fs-6';
-                    eventName.innerText = '[' + currEvent.id + '] ' + currEvent.name;
-                    eventProgress.append(eventName);
-                    
-                    //Продолжительность мероприятия
-                    var eventDuration = document.createElement('p');
-                    eventDuration.classList = 'm-0 p-0 overflow-hidden text-nowrap fs-6';
-                    eventDuration.innerText = currEvent.start.format('DD.MM.YYYY HH:mm') + ' - ' + currEvent.end.format('DD.MM.YYYY HH:mm');
-                    eventProgress.append(eventDuration);
-                    
-                    //Data мероприятия
-                    // var eventId = document.createElement('input');
-                    // eventId.type = 'hidden';
-                    // eventId.name = 'EventData';
-                    // eventId.value = JSON.stringify(currEvent);
-                    // eventProgress.append(eventId);
-                    $(eventProgress).data('data', JSON.stringify(currEvent))
-
-                    //Добавляем в отрисованные
-                    alreadyPushedEvents.push(currEvent);
-
-                    //#region drag events
-                    
-                    AddEventListners(eventProgress, currEvent);
-                    
-                    //#endregion drag events
-
+    try{    
+        //Контекстное меню 
+        var lastContextMenuTarget;
+        var defaultContextMenu = [
+            {
+                text: 'Создать',
+                target: 'both',
+                disabled: false,
+                onClick: function (e) {
+                    AddNewEvent(e)
+                }
+            },
+            {
+                text: 'Изменить',
+                target: 'event',
+                disabled: false,
+                onClick: function (e) {
+                    alert('Не сегодня, дружок-пирожок');
+                    Never(schedule.goblin);
+                }
+            },
+            {
+                text: 'Клонировать',
+                target: 'event',
+                disabled: true,
+                onClick: function (e) {
+                    alert(e.target)
+                }
+            },
+            {
+                text: 'Удалить',
+                target: 'event',
+                disabled: false,
+                onClick: function (e) {                    
+                    deleteEvent()
                 }
             }
+        ];
 
-            date = moment(date).startOf('day').add('1', 'day');
+        var dayContextMenu;
+        var contextMenuExists = false;
+
+        if (schedule.contextMenu === 'default') {
+            dayContextMenu = defaultContextMenu
+        }
+        else if (schedule.contextMenu) {
+            dayContextMenu = defaultContextMenu.concat(schedule.contextMenu)
+        }    
+        else {
+            dayContextMenu = null
         }
         
-        //Включение ресайза
-        $(eventRow).find('.EventDetailContainer').resizableSafe({
-            resizeWidth: true,
-            resizeHeight: false,
-            onDragStart: schedule.scheduleEvents.onResizeStart !== null ? schedule.scheduleEvents.onResizeStart : null,
-            onDragEnd: schedule.scheduleEvents.onResizeEnd !== null ? schedule.scheduleEvents.onResizeEnd : null,
-            onDrag: schedule.scheduleEvents.onResize !== null ? schedule.scheduleEvents.onResize : null,
-            eventMinWidth: schedule.eventMinWidth,
-            resizeStep: schedule.resizeStep,
-            redrawFunc: function (locationId, data) {                
-                var event = schedule.events.find(x => x.id === data.eventId);
-                event.start = data.startDate;
-                event.end = data.endDate;
-                RedrawRow(locationId);
-            }
-        });
+        //Главный блок 
+        var scheduleContainer = document.createElement('div');
+        scheduleContainer.classList = 'p-0 ScheduleContainer';
+        $(scheduleContainer).on('contextmenu', function() {return false;});
+        var daysDifference = moment(schedule.end).startOf('day').diff(moment(schedule.start).startOf('day'), 'days') + 1; 
+        
+        //Отрисовка шапки
+        scheduleContainer.append(GetScheduleHeader(daysDifference));
 
-        [].slice.call(eventRow.querySelectorAll('[data-bs-toggle="tooltip"]')).map(function (tooltipTriggerEl) {
-            new bootstrap.Tooltip(tooltipTriggerEl).enable();
-        });
+    console.log('25 + ((75/' + daysDifference + ')*(' + (moment().startOf('day').diff(moment(schedule.start).startOf('day'), 'days')) + '))=',25 + ((75/daysDifference) * (moment().startOf('day').diff(moment(schedule.start).startOf('day'), 'days'))));
 
-        return eventRow;
+        if(moment().startOf('day') >= schedule.start && moment().startOf('day') <= schedule.end){
 
-        //#endregion
-    }
+            var todayLine = document.createElement('div');
+            todayLine.classList = 'todayLine';
+            todayLine.style.left = 25 
+            + ((75/daysDifference) * (moment().startOf('day').diff(moment(schedule.start).startOf('day'), 'days'))) 
+            + (((75/daysDifference)/1440) * (moment().diff(moment().startOf('day'), 'minutes')))
+            + '%';
+            scheduleContainer.append(todayLine);
+        }
+        
+        //Отрисовка помещений и событий
+        for(var l = 0; l < schedule.locations.length; l++){
+            scheduleContainer.append(GetLocationRow(schedule.locations[l].id));
+        }
 
-    function AddEventListners(eventProgress, currEvent){
-               
-        var oldEventParams;
-        var currentDroppable;
-        var isDragging = false;
-        var draggingElement;
+        function GetLocationRow(locationId){
 
-        $(eventProgress).off('mousedown').on('mousedown', function(e){ 
-            switch(e.button){
-                case 0 :{                                
-                    [].slice.call(scheduleContainer.querySelectorAll('[data-bs-toggle="tooltip"]')).map(function (tooltipTriggerEl) {
-                        new bootstrap.Tooltip(tooltipTriggerEl).disable();
-                    });
+            var location = schedule.locations.find(x=>x.id == locationId);
 
-                    $('.tooltip').hide();
+            //#region Левая колонка
+            //Строка помещения
+            var eventRow = document.createElement('div');
+            eventRow.classList = 'row LocationRow';
+
+            //Помещение
+            var locationDiv = document.createElement('div');
+            locationDiv.classList = 'col-3 LocationsContainer';
+            $(locationDiv).append(location.name);
+            eventRow.append(locationDiv);
+            
+            //Id помещения
+            var locationInput= document.createElement('input');            
+            locationInput.name = 'LocationId';
+            locationInput.type = "hidden";
+            locationInput.value = location.id;
+            locationDiv.append(locationInput);
+
+            //#endregion
+
+            //#region Правая колонка
+            //Столбец c расписанием    
+            var eventsColumn = document.createElement('div');
+            eventsColumn.classList = 'col-9 DaysContainer';
+            eventRow.append(eventsColumn);
+
+            var date = new Date(schedule.start).setHours(0, 0, 0, 0);
+
+            //Уже отрисованные элементы в этой строке (нужен для определения отступа сверху)
+            var alreadyPushedEvents = [];
                     
-                    draggingElement = $(this);
-                    
-                    isDragging = true; 
-                    
-                    oldEventParams = {
-                        parent: $(draggingElement).closest('.ScheduleDay')[0],
-                        style: $(draggingElement).parents('.EventDetailContainer:first').attr('style')
-                    };
+            //Цикл отрисовки сетки дней
+            for(var i = 0; i < daysDifference; i++){
+                
+                //Колонка день
+                var timeZone = document.createElement('li');
+                timeZone.classList = 'ScheduleDay';    
+                timeZone.setAttribute('childnumber', i+1);
+                // timeZone.addEventListener('click', AddNewEvent);
 
-                    $(draggingElement).addClass('movedEvent');
-                    $(draggingElement).parents('.ScheduleDay:first').addClass(schedule.goblin ? 'OldDropableGoblin' : 'OldDropablePoint');
-                    $(draggingElement).parents('.EventDetailContainer:first').css('width', $(draggingElement).parents('.EventDetailContainer:first').css('width'));
-                    
-                    $(document).on('mousemove', function(event) {
+                if (schedule.contextMenu) {
+                    timeZone.addEventListener('contextmenu', DrawContextMenu);
+                }          
+                
+                timeZone.style = 'min-height: 3.2rem;';
+                eventsColumn.append(timeZone);
+                
+                var dateInfo = document.createElement('input');
+                dateInfo.type = 'hidden';
+                dateInfo.name = 'Date';
+                dateInfo.value = moment(date).format('YYYY-MM-DDTHH:mm:SS.000Z'),
+                timeZone.append(dateInfo);
+
+                var locationInfo = document.createElement('input');
+                locationInfo.type = 'hidden';
+                locationInfo.name = 'LocationId';
+                locationInfo.value = location.id ;
+                timeZone.append(locationInfo);
+
+                //Получаем список событий начинающийся в этот день
+                var events = schedule.events.filter(
+                    x => x.locationId == location.id 
+                    && x.start >= moment(date).startOf('day')
+                    && x.start <= moment(date).endOf('day')
+                );
+
+                //Получаем список событий начинающийся в этот день и ранее (если начало выходит за диапазон отрисовки)
+                if(i == 0){
+                    events = schedule.events.filter(
+                        x=>x.locationId == location.id 
+                        && x.start <= moment(date).endOf('day')
+                    ).sort(x=>x.start);
+                }
+                
+                //Отрисовка мероприятий в этот день
+                if(events.length > 0){
+                    for(var e = 0; e < events.length; e++){
                         
-                        if(!isDragging){
-                            document.removeEventListener('mousemove', event);
+                        var currEvent = events[e];
+
+                        //Отступ сверху
+                        var top = alreadyPushedEvents.filter(x=>x.locationId == currEvent.locationId && x.start < currEvent.end && x.end > currEvent.start).length;
+
+                        //Контейнер детали мероприятия (полоска)
+                        var eventProgressContainer = document.createElement('div');
+                        eventProgressContainer.classList = 'EventDetailContainer ' + currEvent.extClass;
+                        
+                        //Контейнер детали мероприятия (полоска)
+                        var eventProgress = document.createElement('div');
+                        eventProgress.classList = 'EventDetail ' + currEvent.extClass;
+                        eventProgress.setAttribute('data-bs-toggle','tooltip');
+                        eventProgress.setAttribute('title', currEvent.name + ' \r\n' + currEvent.start.format('DD.MM.YYYY HH:mm') + ' - ' + currEvent.end.format('DD.MM.YYYY HH:mm'));
+                    
+                        eventProgressContainer.append(eventProgress);
+                        
+                        //Расчет длины события (не лезь сюда, оно тебя сожрет) 
+                        if(currEvent.start >= schedule.start && currEvent.end <= schedule.end)
+                        {
+                            eventProgressContainer.style.width = (currEvent.end.diff(currEvent.start, 'day', true) * 100) + '%';
+                            eventProgressContainer.style.left = (currEvent.start.diff(moment(date), 'day', true) * 100) + '%';
+                        }
+                        else if(currEvent.start < schedule.start && currEvent.end > schedule.end)
+                        {
+                            eventProgressContainer.style.width = (schedule.end.diff(schedule.start.startOf('day'), 'day', true) * 100) + '%';
+                            eventProgressContainer.style.left = '0%';
+                        }
+                        else if(currEvent.start >= schedule.start )
+                        {
+                            eventProgressContainer.style.width = (schedule.end.diff(currEvent.start, 'day', true) * 100) + '%';
+                            eventProgressContainer.style.left = (currEvent.start.diff(moment(date), 'day', true) * 100) + '%';
+                        }
+                        else
+                        {
+                            eventProgressContainer.style.width = (currEvent.end.diff(schedule.start, 'day', true) * 100) + '%';
+                            eventProgressContainer.style.left = '0%';
+                        }
+
+                        eventProgressContainer.style.top = (top * 3.1 + 0.1) + 'rem';
+                        timeZone.append(eventProgressContainer);
+
+                        top++;
+
+                        //Увеличиваем "родителя"
+                        timeZone.style = 'min-height: ' + (top * 3.1 + 0.1) + 'rem;';
+
+                        //Название мероприятия
+                        var eventName = document.createElement('p');
+                        eventName.classList = 'm-0 p-0 overflow-hidden text-nowrap fw-bold fs-6';
+                        eventName.innerText = '[' + currEvent.id + '] ' + currEvent.name;
+                        eventProgress.append(eventName);
+                        
+                        //Продолжительность мероприятия
+                        var eventDuration = document.createElement('p');
+                        eventDuration.classList = 'm-0 p-0 overflow-hidden text-nowrap fs-6';
+                        eventDuration.innerText = currEvent.start.format('DD.MM.YYYY HH:mm') + ' - ' + currEvent.end.format('DD.MM.YYYY HH:mm');
+                        eventProgress.append(eventDuration);
+                        
+                        //Data мероприятия
+                        // var eventId = document.createElement('input');
+                        // eventId.type = 'hidden';
+                        // eventId.name = 'EventData';
+                        // eventId.value = JSON.stringify(currEvent);
+                        // eventProgress.append(eventId);
+                        $(eventProgress).data('data', JSON.stringify(currEvent))
+
+                        //Добавляем в отрисованные
+                        alreadyPushedEvents.push(currEvent);
+
+                        //#region drag events
+                        
+                        AddEventListners(eventProgress, currEvent);
+                        
+                        //#endregion drag events
+
+                    }
+                }
+
+                date = moment(date).startOf('day').add('1', 'day');
+            }
+            
+            //Включение ресайза
+            $(eventRow).find('.EventDetailContainer').resizableSafe({
+                resizeWidth: true,
+                resizeHeight: false,
+                onDragStart: schedule.scheduleEvents.onResizeStart !== null ? schedule.scheduleEvents.onResizeStart : null,
+                onDragEnd: schedule.scheduleEvents.onResizeEnd !== null ? schedule.scheduleEvents.onResizeEnd : null,
+                onDrag: schedule.scheduleEvents.onResize !== null ? schedule.scheduleEvents.onResize : null,
+                eventMinWidth: schedule.eventMinWidth,
+                resizeStep: schedule.resizeStep,
+                redrawFunc: function (locationId, data) {                
+                    var event = schedule.events.find(x => x.id === data.eventId);
+                    event.start = data.startDate;
+                    event.end = data.endDate;
+                    RedrawRow(locationId);
+                }
+            });
+
+            [].slice.call(eventRow.querySelectorAll('[data-bs-toggle="tooltip"]')).map(function (tooltipTriggerEl) {
+                new bootstrap.Tooltip(tooltipTriggerEl).enable();
+            });
+
+            return eventRow;
+
+            //#endregion
+        }
+
+        function AddEventListners(eventProgress, currEvent){
+                
+            var oldEventParams;
+            var currentDroppable;
+            var isDragging = false;
+            var draggingElement;
+            
+            $(eventProgress).off('mousedown').on('mousedown', function(e){ 
+                switch(e.button){
+                    case 0 :{                                
+                        [].slice.call(scheduleContainer.querySelectorAll('[data-bs-toggle="tooltip"]')).map(function (tooltipTriggerEl) {
+                            new bootstrap.Tooltip(tooltipTriggerEl).disable();
+                        });
+
+                        $('.tooltip').hide();
+                        
+                        draggingElement = $(this);
+                        
+                        isDragging = true; 
+                        
+                        oldEventParams = {
+                            parent: $(draggingElement).closest('.ScheduleDay')[0],
+                            style: $(draggingElement).parents('.EventDetailContainer:first').attr('style')
+                        };
+
+                        $(draggingElement).addClass('movedEvent');
+                        $(draggingElement).parents('.ScheduleDay:first').addClass(schedule.goblin ? 'OldDropableGoblin' : 'OldDropablePoint');
+                        $(draggingElement).parents('.EventDetailContainer:first').css('width', $(draggingElement).parents('.EventDetailContainer:first').css('width'));
+                        
+                        $(document).on('mousemove', function(event) {
+                            
+                            if(!isDragging){
+                                document.removeEventListener('mousemove', event);
+                                return;
+                            }
+
+                            const xPositionDifference = event.pageX - draggingElement.offset().left;
+                            const yPositionDifference = event.pageY - draggingElement.offset().top;
+                            
+                            $(draggingElement).parents('.EventDetailContainer:first').offset({
+                                top: event.pageY - yPositionDifference,
+                                left: event.pageX - xPositionDifference
+                            });
+                            
+                            currentDroppable = $(document.elementFromPoint(event.clientX, event.clientY)).closest('.ScheduleDay');
+
+                            $('.' + (schedule.goblin ? 'DropableGoblin' : 'DropablePoint')).removeClass(schedule.goblin ? 'DropableGoblin' : 'DropablePoint');
+                            
+                            if (currentDroppable.length > 0) {
+                                currentDroppable.addClass(schedule.goblin ? 'DropableGoblin' : 'DropablePoint');
+                                currentDroppable.append($(draggingElement).parents('.EventDetailContainer:first').detach());
+                            }
+                        });
+                    }
+                }
+            }); 
+
+            $(document).on('mouseup',function(e){ 
+                switch(e.button){
+                    case 0 :{ 
+                        if(!isDragging || draggingElement == undefined || draggingElement == null || oldEventParams == undefined){
                             return;
                         }
 
-                        const xPositionDifference = event.pageX - draggingElement.offset().left;
-                        const yPositionDifference = event.pageY - draggingElement.offset().top;
+                        isDragging = false;
                         
-                        $(draggingElement).parents('.EventDetailContainer:first').offset({
-                            top: event.pageY - yPositionDifference,
-                            left: event.pageX - xPositionDifference
-                        });
-                        
-                        currentDroppable = $(document.elementFromPoint(event.clientX, event.clientY)).closest('.ScheduleDay');
-
+                        $('.' + (schedule.goblin ? 'OldDropableGoblin' : 'OldDropablePoint')).removeClass((schedule.goblin ? 'OldDropableGoblin' : 'OldDropablePoint'));
                         $('.' + (schedule.goblin ? 'DropableGoblin' : 'DropablePoint')).removeClass(schedule.goblin ? 'DropableGoblin' : 'DropablePoint');
-                        
-                        if (currentDroppable.length > 0) {
-                            currentDroppable.addClass(schedule.goblin ? 'DropableGoblin' : 'DropablePoint');
-                            currentDroppable.append($(draggingElement).parents('.EventDetailContainer:first').detach());
+                        $('.movedEvent').removeClass('movedEvent');
+
+                        document.removeEventListener('mousemove',function(e){}); 
+
+                        [].slice.call(scheduleContainer.querySelectorAll('[data-bs-toggle="tooltip"]')).map(function (tooltipTriggerEl) {
+                            new bootstrap.Tooltip(tooltipTriggerEl).enable();
+                        });
+
+                        if(oldEventParams == undefined){
+                            return;
                         }
-                    });
-                }
-            }
-        }); 
 
-        $(document).on('mouseup',function(e){ 
-            switch(e.button){
-                case 0 :{ 
-                    if(!isDragging || draggingElement == undefined || draggingElement == null || oldEventParams == undefined){
-                        return;
+                        $(eventProgress).parents('.EventDetailContainer:first').attr('style', oldEventParams.style);
+                        
+                        var eventStart = moment(currEvent.start);
+                        var eventEnd = moment(currEvent.end);
+                        var prevContainerDate = moment(currEvent.start).startOf('day');
+                        var newContainerDate = moment($(eventProgress).parents('.ScheduleDay:first').find('input[name="Date"]').val()).startOf('day');
+
+                        var daysDiff = newContainerDate.diff(prevContainerDate, 'days');
+                        var duration = moment.duration(eventEnd.diff(eventStart));
+
+                        currEvent.start = eventStart.add(daysDiff, 'days');
+                        currEvent.end = currEvent.start.clone().add(duration);
+
+                        var newLocationId = parseInt($(eventProgress).parents('.ScheduleDay:first').find('input[name="LocationId"]').val());
+                        var prevLocationId = parseInt($(oldEventParams.parent).find('input[name="LocationId"]').val());
+                        currEvent.locationId = newLocationId;
+                        
+                        RedrawRow(newLocationId);
+                        RedrawRow(prevLocationId);
+
+                        oldEventParams = null;
                     }
-
-                    isDragging = false;
-                    
-                    $('.' + (schedule.goblin ? 'OldDropableGoblin' : 'OldDropablePoint')).removeClass((schedule.goblin ? 'OldDropableGoblin' : 'OldDropablePoint'));
-                    $('.' + (schedule.goblin ? 'DropableGoblin' : 'DropablePoint')).removeClass(schedule.goblin ? 'DropableGoblin' : 'DropablePoint');
-                    $('.movedEvent').removeClass('movedEvent');
-
-                    document.removeEventListener('mousemove',function(e){}); 
-
-                    [].slice.call(scheduleContainer.querySelectorAll('[data-bs-toggle="tooltip"]')).map(function (tooltipTriggerEl) {
-                        new bootstrap.Tooltip(tooltipTriggerEl).enable();
-                    });
-
-                    if(oldEventParams == undefined){
-                        return;
-                    }
-
-                    $(eventProgress).parents('.EventDetailContainer:first').attr('style', oldEventParams.style);
-                    
-                    var eventStart = moment(currEvent.start);
-                    var eventEnd = moment(currEvent.end);
-                    var prevContainerDate = moment(currEvent.start).startOf('day');
-                    var newContainerDate = moment($(eventProgress).parents('.ScheduleDay:first').find('input[name="Date"]').val()).startOf('day');
-
-                    var daysDiff = newContainerDate.diff(prevContainerDate, 'days');
-                    var duration = moment.duration(eventEnd.diff(eventStart));
-
-                    currEvent.start = eventStart.add(daysDiff, 'days');
-                    currEvent.end = currEvent.start.clone().add(duration);
-
-                    var newLocationId = parseInt($(eventProgress).parents('.ScheduleDay:first').find('input[name="LocationId"]').val());
-                    var prevLocationId = parseInt($(oldEventParams.parent).find('input[name="LocationId"]').val());
-                    currEvent.locationId = newLocationId;
-                    
-                    RedrawRow(newLocationId);
-                    RedrawRow(prevLocationId);
-
-                    oldEventParams = null;
                 }
-            }
-        });
-
-        delete eventProgress;
-    }
-
-    function RedrawRow(locationId){
-        var $currentRow = $('input[name="LocationId"][value="' + locationId + '"]:first', scheduleContainer).parents('.LocationRow');
-        $currentRow.replaceWith(GetLocationRow(locationId));
-    }
-
-    function GetScheduleHeader(daysDifference){
-
-        //Строка шапки
-        var eventRowHeader = document.createElement('div');
-        eventRowHeader.classList = 'row HeaderRow';
-
-        //Помещение
-        var locationDivHeader = document.createElement('div');
-        locationDivHeader.classList = 'col-3 GridHeader';
-        locationDivHeader.innerText = schedule.title !== null && schedule.title !== undefined ? schedule.title : 'Помещения';
-        eventRowHeader.append(locationDivHeader);
-
-        //Id помещения
-        var locationInputHeader = document.createElement('input');            
-        locationInputHeader.type = "hidden";
-        locationInputHeader.value = 0;
-        locationDivHeader.append(locationInputHeader);
-
-        //Контейнер дат в шапке
-        var eventsColumnHeader = document.createElement('div');
-        eventsColumnHeader.classList = 'col-9 GridHeader';
-        eventRowHeader.append(eventsColumnHeader);
-
-        var headerDate = moment(schedule.start).startOf('day');
-
-        //Отрисовка шапки
-        for(var i = 0; i < daysDifference; i++){
-            //Колонка день
-            var timeZoneHeader = document.createElement('li');
-            timeZoneHeader.classList = 'headerDay text-center';
-            let currentDate = moment(headerDate).format('DD.MM.YYYY').toString();
-            let array = currentDate.split('.')
-            let shortName = MonthInText(array[1], true)
-            let longName = MonthInText(array[1], false)
-            let isChill = IsChillDay(array[2], array[1], array[0])
-            if (isChill) {
-                timeZoneHeader.innerHTML = 
-                    `<span style="color:red;font-weight:500">${array[0]}</span><br><span style="font-size:12px">${shortName}</span>`            
-            }
-            else {
-                timeZoneHeader.innerHTML = 
-                    `<span style="font-weight:500">${array[0]}</span><br><span style="font-size:12px">${shortName}</span>`        
-            }
-
-            timeZoneHeader.title = array[0] + ' ' + longName + ' ' + array[2] + ' г.'
-            // timeZoneHeader.innerText = moment(headerDate).format('DD.MM.YYYY');
-            eventsColumnHeader.append(timeZoneHeader);
-
-            headerDate = moment(headerDate).add('1', 'day');
-        }
-
-        return eventRowHeader;
-    }
-    
-    //Отрисовка контекстного меню(элементы контекста)
-    //Возможно как доп параметр надо передавать объект по которому кликнули, для более корректной отрисовки
-    function DrawContextMenu (e) {               
-        $('.daysContextMenu').remove();
-        contextMenuExists = false;
-        lastContextMenuTarget = e
-
-        var menuContainer = $('<div>',{
-            class: 'list-group daysContextMenu',
-        }).css({
-            // получаем координаты клика и делаем их координатами меню
-            left: event.pageX+'px', 
-            top: event.pageY+'px' 
-        });
-
-        for(var i = 0; i < dayContextMenu.length; i++){
-            var option = dayContextMenu[i];
-
-            var menuButton = $('<button>',{
-                type: 'button',
-                class: 'list-group-item list-group-item-action',
-                disabled: option.disabled
-            }).on('click', option.onClick);
-            
-            var menuSpan = $('<span>',{
-                class: 'contextSpan',
-                text: option.text
             });
-            
-            menuButton.append(menuSpan);
 
-            if (e.target.parentElement.className.indexOf('DaysContainer') !== -1) {
-                if (option.target === 'both' || option.target === 'timeline') {                    
-                    menuContainer.append(menuButton);
-                }
-            } 
-            else if (e.target.parentElement.className.indexOf('EventDetail') !== -1) {
-                if (option.target === 'both' || option.target === 'event') {                    
-                    menuContainer.append(menuButton);
-                }
-            }            
+            delete eventProgress;
         }
 
-        $('body').append(menuContainer);
-        contextMenuExists = true;
-        return false
-    }
+        function RedrawRow(locationId){
+            var $currentRow = $('input[name="LocationId"][value="' + locationId + '"]:first', scheduleContainer).parents('.LocationRow');
+            $currentRow.replaceWith(GetLocationRow(locationId));
+        }
 
-    //Добавляем события на основной элемент
-    $(scheduleContainer).find('div').each(()=>{
-        //Удаляем контекстное меню если кликнули мимо
-        $(this).on('click',()=>{
+        function GetScheduleHeader(daysDifference){
+
+            //Строка шапки
+            var eventRowHeader = document.createElement('div');
+            eventRowHeader.classList = 'row HeaderRow';
+
+            //Помещение
+            var locationDivHeader = document.createElement('div');
+            locationDivHeader.classList = 'col-3 GridHeader';
+            locationDivHeader.innerText = schedule.title !== null && schedule.title !== undefined ? schedule.title : 'Помещения';
+            eventRowHeader.append(locationDivHeader);
+
+            //Id помещения
+            var locationInputHeader = document.createElement('input');            
+            locationInputHeader.type = "hidden";
+            locationInputHeader.value = 0;
+            locationDivHeader.append(locationInputHeader);
+
+            //Контейнер дат в шапке
+            var eventsColumnHeader = document.createElement('div');
+            eventsColumnHeader.classList = 'col-9 GridHeader';
+            eventRowHeader.append(eventsColumnHeader);
+
+            var headerDate = moment(schedule.start).startOf('day');
+
+            //Отрисовка шапки
+            for(var i = 0; i < daysDifference; i++){
+                //Колонка день
+                var timeZoneHeader = document.createElement('li');
+                timeZoneHeader.classList = 'headerDay text-center';
+                let currentDate = moment(headerDate).format('DD.MM.YYYY').toString();
+                let array = currentDate.split('.')
+                let shortName = MonthInText(array[1], true)
+                let longName = MonthInText(array[1], false)
+                let isChill = IsChillDay(array[2], array[1], array[0])
+                if (isChill) {
+                    timeZoneHeader.innerHTML = 
+                        `<span style="color:red;font-weight:500">${array[0]}</span><br><span style="font-size:12px">${shortName}</span>`            
+                }
+                else {
+                    timeZoneHeader.innerHTML = 
+                        `<span style="font-weight:500">${array[0]}</span><br><span style="font-size:12px">${shortName}</span>`        
+                }
+
+                timeZoneHeader.title = array[0] + ' ' + longName + ' ' + array[2] + ' г.'
+                // timeZoneHeader.innerText = moment(headerDate).format('DD.MM.YYYY');
+                eventsColumnHeader.append(timeZoneHeader);
+
+                headerDate = moment(headerDate).add('1', 'day');
+            }
+
+            return eventRowHeader;
+        }
+        
+        //Отрисовка контекстного меню(элементы контекста)
+        //Возможно как доп параметр надо передавать объект по которому кликнули, для более корректной отрисовки
+        function DrawContextMenu (e) {               
             $('.daysContextMenu').remove();
-            contextMenuExists = false
-        });
-        //Удаляем строчку расширения строки если курсор вышел за границы шахматки
-        $(this).on('mouseover',()=>{
-            $('.EmptyRow').remove();
-            $('.noBottomBorder').removeClass('noBottomBorder');
-        });
-    });
+            contextMenuExists = false;
+            lastContextMenuTarget = e
 
-    //Добавление нового события на таймлайн
-    function AddNewEvent(e) {
-        // if (e.target.className === 'ScheduleDay') {
-            // if (!contextMenuExists) {
-                let $target = $(lastContextMenuTarget.target).closest('.ScheduleDay');
-                let eventId = 0 + (Math.min(...schedule.events.map(event => event.id < 0))) - 1;
-                let eventLocationId = $target.find('input[name="LocationId"]').val();
+            var menuContainer = $('<div>',{
+                class: 'list-group daysContextMenu',
+            }).css({
+                // получаем координаты клика и делаем их координатами меню
+                left: e.pageX+'px', 
+                top: e.pageY+'px' 
+            });
+
+            for(var i = 0; i < dayContextMenu.length; i++){
+                var option = dayContextMenu[i];
+
+                var menuButton = $('<button>',{
+                    type: 'button',
+                    class: 'list-group-item list-group-item-action',
+                    disabled: option.disabled
+                }).on('click', option.onClick);
                 
-                var eventObj = {
-                    id: eventId,
-                    locationId: eventLocationId,
-                    name: "Событие " + eventId,
-                    extClass: "",
-                    start: moment($target.find('input[name="Date"]').val()).startOf('day').hour(9),
-                    end: moment($target.find('input[name="Date"]').val()).startOf('day').hour(9 + schedule.eventMinWidth)
-                };
+                var menuSpan = $('<span>',{
+                    class: 'contextSpan',
+                    text: option.text
+                });
                 
-                schedule.events.push(eventObj);
-                
-                RedrawRow(eventLocationId);
+                menuButton.append(menuSpan);
 
-                schedule.scheduleEvents.onCreateEvent(eventObj);
-                
-                return;
-            // }            
-        // }        
-    }
+                if (e.target.parentElement.className.indexOf('DaysContainer') !== -1) {
+                    if (option.target === 'both' || option.target === 'timeline') {                    
+                        menuContainer.append(menuButton);
+                    }
+                } 
+                else if (e.target.parentElement.className.indexOf('EventDetail') !== -1) {
+                    if (option.target === 'both' || option.target === 'event') {                    
+                        menuContainer.append(menuButton);
+                    }
+                }            
+            }
 
-    function deleteEvent () {
-        let $target = $(lastContextMenuTarget.target).closest('.EventDetail');
-        let eventData = JSON.parse( $($target).data('data') )
-        let eventLocationId = eventData.locationId
-        let eventId = eventData.id
-
-        let newEventsArray = schedule.events.filter(item => !(item.locationId === eventLocationId && item.id === eventId))
-        schedule.events = newEventsArray
-        RedrawRow(eventLocationId);
-        schedule.scheduleEvents.onDeleteEvent();
-    }
-
-    //Вспомогательные функции для дат в отрисовке шапки
-    function MonthInText(str, short) {
-        switch (str) {
-            case '01': return short === true ? 'ЯНВ' : 'января';
-            case '02': return short === true ? 'ФЕВ' : 'февраля';
-            case '03': return short === true ? 'МАР' : 'марта';
-            case '04': return short === true ? 'АПР' : 'апреля';
-            case '05': return short === true ? 'МАЙ' : 'мая';
-            case '06': return short === true ? 'ИЮН' : 'июня';
-            case '07': return short === true ? 'ИЮЛ' : 'июля';
-            case '08': return short === true ? 'АВГ' : 'августа';
-            case '09': return short === true ? 'СЕН' : 'сентября';
-            case '10': return short === true ? 'ОКТ' : 'октября';
-            case '11': return short === true ? 'НОЯ' : 'ноября';
-            case '12': return short === true ? 'ДЕК' : 'декабря';
+            $('body').append(menuContainer);
+            contextMenuExists = true;
+            return false
         }
-    }
 
-    function IsChillDay(d, m, y) {
-        let days = [0, 1, 2, 3, 4, 5, 6];
-        let date = new Date(`${d}-${m}-${y}`)
-        var n = date.getDay();
-        if (days[n] === 0 || days[n] === 6) {
-            return true
+        //Добавляем события на основной элемент
+        $(scheduleContainer).find('div').each(()=>{
+            //Удаляем контекстное меню если кликнули мимо
+            $(this).on('click',()=>{
+                $('.daysContextMenu').remove();
+                contextMenuExists = false
+            });
+            //Удаляем строчку расширения строки если курсор вышел за границы шахматки
+            $(this).on('mouseover',()=>{
+                $('.EmptyRow').remove();
+                $('.noBottomBorder').removeClass('noBottomBorder');
+            });
+        });
+
+        //Добавление нового события на таймлайн
+        function AddNewEvent(e) {
+            // if (e.target.className === 'ScheduleDay') {
+                // if (!contextMenuExists) {
+                    let $target = $(lastContextMenuTarget.target).closest('.ScheduleDay');
+                    let eventId = 0 + (Math.min(...schedule.events.map(event => event.id < 0))) - 1;
+                    let eventLocationId = $target.find('input[name="LocationId"]').val();
+                    
+                    var eventObj = {
+                        id: eventId,
+                        locationId: eventLocationId,
+                        name: "Событие " + eventId,
+                        extClass: "",
+                        start: moment($target.find('input[name="Date"]').val()).startOf('day').hour(9),
+                        end: moment($target.find('input[name="Date"]').val()).startOf('day').hour(9 + schedule.eventMinWidth)
+                    };
+                    
+                    schedule.events.push(eventObj);
+                    
+                    RedrawRow(eventLocationId);
+
+                    schedule.scheduleEvents.onCreateEvent(eventObj);
+                    
+                    return;
+                // }            
+            // }        
         }
-        return false
+
+        function deleteEvent () {
+            let $target = $(lastContextMenuTarget.target).closest('.EventDetail');
+            let eventData = JSON.parse( $($target).data('data') )
+            let eventLocationId = eventData.locationId
+            let eventId = eventData.id
+
+            let newEventsArray = schedule.events.filter(item => !(item.locationId === eventLocationId && item.id === eventId))
+            schedule.events = newEventsArray
+            RedrawRow(eventLocationId);
+            schedule.scheduleEvents.onDeleteEvent();
+        }
+
+        //Вспомогательные функции для дат в отрисовке шапки
+        function MonthInText(str, short) {
+            switch (str) {
+                case '01': return short === true ? 'ЯНВ' : 'января';
+                case '02': return short === true ? 'ФЕВ' : 'февраля';
+                case '03': return short === true ? 'МАР' : 'марта';
+                case '04': return short === true ? 'АПР' : 'апреля';
+                case '05': return short === true ? 'МАЙ' : 'мая';
+                case '06': return short === true ? 'ИЮН' : 'июня';
+                case '07': return short === true ? 'ИЮЛ' : 'июля';
+                case '08': return short === true ? 'АВГ' : 'августа';
+                case '09': return short === true ? 'СЕН' : 'сентября';
+                case '10': return short === true ? 'ОКТ' : 'октября';
+                case '11': return short === true ? 'НОЯ' : 'ноября';
+                case '12': return short === true ? 'ДЕК' : 'декабря';
+            }
+        }
+
+        function IsChillDay(d, m, y) {
+            let days = [0, 1, 2, 3, 4, 5, 6];
+            let date = new Date(`${d}-${m}-${y}`)
+            var n = date.getDay();
+            if (days[n] === 0 || days[n] === 6) {
+                return true
+            }
+            return false
+        }
+
+        //Включаю все подсказки при наведении
+        // var tooltipTriggerList = [].slice.call(scheduleContainer.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        
+        // var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        //     return new bootstrap.Tooltip(tooltipTriggerEl)
+        // });
+
+        $('.tooltip').hide();
+
+        return scheduleContainer;
+    }catch(ex){
+        console.warn(ex);
+
+        Never(schedule.goblin);
     }
+}
 
-    //Включаю все подсказки при наведении
-    // var tooltipTriggerList = [].slice.call(scheduleContainer.querySelectorAll('[data-bs-toggle="tooltip"]'));
-    
-    // var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-    //     return new bootstrap.Tooltip(tooltipTriggerEl)
-    // });
+function Never(goblin){
+    if(goblin == true){
+        var audio = new Audio(); // Создаём новый элемент Audio
+        audio.src = './plugins/never/never.mp3'; // Указываем путь к звуку "клика"
+        audio.autoplay = true; // Автоматически запускаем
+        $('*').addClass('never');
+        console.log('never');
 
-    $('.tooltip').hide();
-
-    return scheduleContainer;
+        setTimeout(
+            () => {
+                $('.never').removeClass('never');
+            },
+            34 * 1000
+          );
+    }
 }
