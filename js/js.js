@@ -31,7 +31,8 @@ function DrawSchedule(scheduleData)
                 target: 'event',
                 disabled: false,
                 onClick: function (e) {
-                    alert('Не сегодня, дружок-пирожок')
+                    alert('Не сегодня, дружок-пирожок');
+                    Never(schedule.goblin);
                 }
             },
             {
