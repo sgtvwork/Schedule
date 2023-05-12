@@ -1,8 +1,7 @@
 //Отрисовывает шахматку и возвращает как html объект
 function DrawSchedule(schedule)
 {
-    schedule.start = mom
-    ent(schedule.start).startOf('day');
+    schedule.start = moment(schedule.start).startOf('day');
     schedule.end = moment(schedule.end).endOf('day');
 
     if(scheduleVariable.goblin != true) scheduleVariable.goblin = false;

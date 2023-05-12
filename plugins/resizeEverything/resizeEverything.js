@@ -80,12 +80,12 @@
             var resizerL = getHandleLeft(null, $el)
             var resizerR = getHandle(null, $el)
 
-            var labelWidth
+            var labelWidth                
 
             function mouseDown (e) {
                 whichHandle = e.target.className
                 e.preventDefault()
-
+                
                 stepStart = $('.ScheduleDay').width() / 24 * resizeStepParam; 
                 step = stepStart
                 original_width = parseFloat($el.width());
@@ -114,7 +114,7 @@
 
             resizerL.on("mousedown." + opt.instanceId, mouseDown);
             resizerR.on("mousedown." + opt.instanceId, mouseDown);
-            function resize (e){
+            function resize (e) {
                 let dayWidth = $('.ScheduleDay').width()
                 let minWidth = dayWidth / options.eventMinWidth
 
@@ -131,8 +131,8 @@
                 let commonwidth = dayWidth * daysNumber.length             
                 let leftBorder = fullDaysBeforeEvent * dayWidth                
                 let leftRange = original_width + leftBorder + original_x 
-                let rightRange = (commonwidth - leftBorder - original_x)                 
-                
+                let rightRange = (commonwidth - leftBorder - original_x)                  
+
                 if (whichHandle.indexOf('stickL') !== -1) {
                     const width = original_width - (e.pageX - original_mouse_x)
                     if (width >= minWidth && width <= leftRange) {  
@@ -167,6 +167,8 @@
                     if (width >= minWidth && width <= rightRange) {
                         let check = (original_width - width)
                         let direction = check > 0 ? 'l' : 'r'
+                        // console.log(check, step)
+
                         if (Math.abs(check) > step) {
                             step += stepStart
                             let prc = 100 * width / $('.ScheduleDay').width()
@@ -175,7 +177,7 @@
                             changeResizeLabelText('r', direction)
                             setTimelabel2()
                             $('#resizeTempTimeLabel').css('left', e.clientX + 'px')
-                        }
+                        }                     
                     }                    
                 } 
 
@@ -279,7 +281,6 @@
                 $(paragraphs[1]).text(period)
                 let event = $($el).find('EventDetail')
                 let titleText = `[${$elementInfo.id}] ${$elementInfo.name} ${period}`
-                console.log(event, titleText)
                 $(event).attr('data-bs-original-title', titleText)
             }
 
