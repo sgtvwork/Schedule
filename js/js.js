@@ -1,11 +1,19 @@
 //Отрисовывает шахматку и возвращает как html объект
-function DrawSchedule(schedule)
+function DrawSchedule(scheduleData)
 {
-    schedule.start = moment(schedule.start).startOf('day');
-    schedule.end = moment(schedule.end).endOf('day');
-
-    if(scheduleVariable.goblin != true) scheduleVariable.goblin = false;
-
+    var schedule = {
+        title: scheduleData.title != undefined && scheduleData.title.length > 0 ? scheduleData.title : 'Помещения',
+        start: scheduleData.start != undefined ? moment(scheduleData.start).startOf('day') : moment().add('-2','days').startOf('day'),
+        end: scheduleData.end != undefined ? moment(scheduleData.end).endOf('day') : moment().add('5','days').endOf('day'),
+        locations: scheduleData.locations != undefined && scheduleData.locations.length > 0 ? scheduleData.locations : [],
+        events: scheduleData.events != undefined && scheduleData.events.length > 0 ? scheduleData.events : [],
+        scheduleEvents: scheduleData.scheduleEvents,
+        contextMenu: scheduleData.cMenu,
+        resizeStep: scheduleData.resizeStep != undefined && scheduleData.resizeStep > 0 ? parseInt(scheduleData.resizeStep) : 1,
+        eventMinWidth: scheduleData.eventMinWidth != undefined && scheduleData.eventMinWidth > 0 ? parseInt(scheduleData.eventMinWidth) : 1,
+        goblin: scheduleData.goblin != true ? false : scheduleData.goblin
+    }
+    
     //Контекстное меню 
     var lastContextMenuTarget
     var defaultContextMenu = [
