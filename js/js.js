@@ -266,95 +266,101 @@ console.log('25 + ((75/' + daysDifference + ')*(' + (moment().startOf('day').dif
         var draggingElement;
 
         $(eventProgress).off('mousedown').on('mousedown', function(e){ 
-            
-            [].slice.call(scheduleContainer.querySelectorAll('[data-bs-toggle="tooltip"]')).map(function (tooltipTriggerEl) {
-                new bootstrap.Tooltip(tooltipTriggerEl).disable();
-            });
+            switch(e.button){
+                case 0 :{                                
+                    [].slice.call(scheduleContainer.querySelectorAll('[data-bs-toggle="tooltip"]')).map(function (tooltipTriggerEl) {
+                        new bootstrap.Tooltip(tooltipTriggerEl).disable();
+                    });
 
-            $('.tooltip').hide();
-            
-            draggingElement = $(this);
-            
-            isDragging = true; 
-            
-            oldEventParams = {
-                parent: $(draggingElement).closest('.ScheduleDay')[0],
-                style: $(draggingElement).parents('.EventDetailContainer:first').attr('style')
-            };
+                    $('.tooltip').hide();
+                    
+                    draggingElement = $(this);
+                    
+                    isDragging = true; 
+                    
+                    oldEventParams = {
+                        parent: $(draggingElement).closest('.ScheduleDay')[0],
+                        style: $(draggingElement).parents('.EventDetailContainer:first').attr('style')
+                    };
 
-            $(draggingElement).addClass('movedEvent');
-            $(draggingElement).parents('.ScheduleDay:first').addClass(schedule.goblin ? 'OldDropableGoblin' : 'OldDropablePoint');
-            $(draggingElement).parents('.EventDetailContainer:first').css('width', $(draggingElement).parents('.EventDetailContainer:first').css('width'));
-            
-            $(document).on('mousemove', function(event) {
-                
-                if(!isDragging){
-                    document.removeEventListener('mousemove', event);
-                    return;
+                    $(draggingElement).addClass('movedEvent');
+                    $(draggingElement).parents('.ScheduleDay:first').addClass(schedule.goblin ? 'OldDropableGoblin' : 'OldDropablePoint');
+                    $(draggingElement).parents('.EventDetailContainer:first').css('width', $(draggingElement).parents('.EventDetailContainer:first').css('width'));
+                    
+                    $(document).on('mousemove', function(event) {
+                        
+                        if(!isDragging){
+                            document.removeEventListener('mousemove', event);
+                            return;
+                        }
+
+                        const xPositionDifference = event.pageX - draggingElement.offset().left;
+                        const yPositionDifference = event.pageY - draggingElement.offset().top;
+                        
+                        $(draggingElement).parents('.EventDetailContainer:first').offset({
+                            top: event.pageY - yPositionDifference,
+                            left: event.pageX - xPositionDifference
+                        });
+                        
+                        currentDroppable = $(document.elementFromPoint(event.clientX, event.clientY)).closest('.ScheduleDay');
+
+                        $('.' + (schedule.goblin ? 'DropableGoblin' : 'DropablePoint')).removeClass(schedule.goblin ? 'DropableGoblin' : 'DropablePoint');
+                        
+                        if (currentDroppable.length > 0) {
+                            currentDroppable.addClass(schedule.goblin ? 'DropableGoblin' : 'DropablePoint');
+                            currentDroppable.append($(draggingElement).parents('.EventDetailContainer:first').detach());
+                        }
+                    });
                 }
-
-                const xPositionDifference = event.pageX - draggingElement.offset().left;
-                const yPositionDifference = event.pageY - draggingElement.offset().top;
-                
-                $(draggingElement).parents('.EventDetailContainer:first').offset({
-                    top: event.pageY - yPositionDifference,
-                    left: event.pageX - xPositionDifference
-                });
-                
-                currentDroppable = $(document.elementFromPoint(event.clientX, event.clientY)).closest('.ScheduleDay');
-
-                $('.' + (schedule.goblin ? 'DropableGoblin' : 'DropablePoint')).removeClass(schedule.goblin ? 'DropableGoblin' : 'DropablePoint');
-                
-                if (currentDroppable.length > 0) {
-                    currentDroppable.addClass(schedule.goblin ? 'DropableGoblin' : 'DropablePoint');
-                    currentDroppable.append($(draggingElement).parents('.EventDetailContainer:first').detach());
-                }
-            });
+            }
         }); 
 
         $(document).on('mouseup',function(e){ 
-            
-            if(!isDragging || draggingElement == undefined || draggingElement == null || oldEventParams == undefined){
-                return;
+            switch(e.button){
+                case 0 :{ 
+                    if(!isDragging || draggingElement == undefined || draggingElement == null || oldEventParams == undefined){
+                        return;
+                    }
+
+                    isDragging = false;
+                    
+                    $('.' + (schedule.goblin ? 'OldDropableGoblin' : 'OldDropablePoint')).removeClass((schedule.goblin ? 'OldDropableGoblin' : 'OldDropablePoint'));
+                    $('.' + (schedule.goblin ? 'DropableGoblin' : 'DropablePoint')).removeClass(schedule.goblin ? 'DropableGoblin' : 'DropablePoint');
+                    $('.movedEvent').removeClass('movedEvent');
+
+                    document.removeEventListener('mousemove',function(e){}); 
+
+                    [].slice.call(scheduleContainer.querySelectorAll('[data-bs-toggle="tooltip"]')).map(function (tooltipTriggerEl) {
+                        new bootstrap.Tooltip(tooltipTriggerEl).enable();
+                    });
+
+                    if(oldEventParams == undefined){
+                        return;
+                    }
+
+                    $(eventProgress).parents('.EventDetailContainer:first').attr('style', oldEventParams.style);
+                    
+                    var eventStart = moment(currEvent.start);
+                    var eventEnd = moment(currEvent.end);
+                    var prevContainerDate = moment(currEvent.start).startOf('day');
+                    var newContainerDate = moment($(eventProgress).parents('.ScheduleDay:first').find('input[name="Date"]').val()).startOf('day');
+
+                    var daysDiff = newContainerDate.diff(prevContainerDate, 'days');
+                    var duration = moment.duration(eventEnd.diff(eventStart));
+
+                    currEvent.start = eventStart.add(daysDiff, 'days');
+                    currEvent.end = currEvent.start.clone().add(duration);
+
+                    var newLocationId = parseInt($(eventProgress).parents('.ScheduleDay:first').find('input[name="LocationId"]').val());
+                    var prevLocationId = parseInt($(oldEventParams.parent).find('input[name="LocationId"]').val());
+                    currEvent.locationId = newLocationId;
+                    
+                    RedrawRow(newLocationId);
+                    RedrawRow(prevLocationId);
+
+                    oldEventParams = null;
+                }
             }
-
-            isDragging = false;
-            
-            $('.' + (schedule.goblin ? 'OldDropableGoblin' : 'OldDropablePoint')).removeClass((schedule.goblin ? 'OldDropableGoblin' : 'OldDropablePoint'));
-            $('.' + (schedule.goblin ? 'DropableGoblin' : 'DropablePoint')).removeClass(schedule.goblin ? 'DropableGoblin' : 'DropablePoint');
-            $('.movedEvent').removeClass('movedEvent');
-
-            document.removeEventListener('mousemove',function(e){}); 
-
-            [].slice.call(scheduleContainer.querySelectorAll('[data-bs-toggle="tooltip"]')).map(function (tooltipTriggerEl) {
-                new bootstrap.Tooltip(tooltipTriggerEl).enable();
-            });
-
-            if(oldEventParams == undefined){
-                return;
-            }
-
-            $(eventProgress).parents('.EventDetailContainer:first').attr('style', oldEventParams.style);
-            
-            var eventStart = moment(currEvent.start);
-            var eventEnd = moment(currEvent.end);
-            var prevContainerDate = moment(currEvent.start).startOf('day');
-            var newContainerDate = moment($(eventProgress).parents('.ScheduleDay:first').find('input[name="Date"]').val()).startOf('day');
-
-            var daysDiff = newContainerDate.diff(prevContainerDate, 'days');
-            var duration = moment.duration(eventEnd.diff(eventStart));
-
-            currEvent.start = eventStart.add(daysDiff, 'days');
-            currEvent.end = currEvent.start.clone().add(duration);
-
-            var newLocationId = parseInt($(eventProgress).parents('.ScheduleDay:first').find('input[name="LocationId"]').val());
-            var prevLocationId = parseInt($(oldEventParams.parent).find('input[name="LocationId"]').val());
-            currEvent.locationId = newLocationId;
-            
-            RedrawRow(newLocationId);
-            RedrawRow(prevLocationId);
-
-            oldEventParams = null;
         });
 
         delete eventProgress;
