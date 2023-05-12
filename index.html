@@ -62,7 +62,11 @@
             name: "EventName1",
             extClass: "",
             start: moment().add('1','day').startOf('day').hour(9),
-            end: moment().add('2','day').startOf('day').hour(9).add('4','hour')
+            end: moment().add('2','day').startOf('day').hour(9).add('4','hour'),
+            userData: {
+                value1: 1,
+                value2: 2
+            }
         },
         {
             id: 2,
@@ -183,6 +187,8 @@
     }
 
     //Доп кнопки для ПКМ меню
+    //Варианты target: 'both', 'event', 'timeline'
+    //'both' применяется и на эвент и таймлайн
     var cMenu = [
         {
             text: 'Дополнительное действие',

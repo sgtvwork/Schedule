@@ -223,11 +223,12 @@ console.log('25 + ((75/' + daysDifference + ')*(' + (moment().startOf('day').dif
                     eventProgress.append(eventDuration);
                     
                     //Data мероприятия
-                    var eventId = document.createElement('input');
-                    eventId.type = 'hidden';
-                    eventId.name = 'EventData';
-                    eventId.value = JSON.stringify(currEvent);
-                    eventProgress.append(eventId);
+                    // var eventId = document.createElement('input');
+                    // eventId.type = 'hidden';
+                    // eventId.name = 'EventData';
+                    // eventId.value = JSON.stringify(currEvent);
+                    // eventProgress.append(eventId);
+                    $(eventProgress).data('data', JSON.stringify(currEvent))
 
                     //Добавляем в отрисованные
                     alreadyPushedEvents.push(currEvent);
@@ -529,8 +530,7 @@ console.log('25 + ((75/' + daysDifference + ')*(' + (moment().startOf('day').dif
 
     function deleteEvent () {
         let $target = $(lastContextMenuTarget.target).closest('.EventDetail');
-        console.log($target)
-        let eventData = JSON.parse( $($target).find('input[type=hidden]').val() )
+        let eventData = JSON.parse( $($target).data('data') )
         let eventLocationId = eventData.locationId
         let eventId = eventData.id
 

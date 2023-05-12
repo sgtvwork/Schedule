@@ -204,7 +204,7 @@
                 // $(eventdetail).attr('data-bs-original-title', newTitle)
                 
                 if (options.redrawFunc) {
-                    let eventData = JSON.parse( $($el).find('input[name=EventData]').val() )
+                    let eventData = JSON.parse( $($el).find('.EventDetail').data('data') )
 
                     // let dates = newTimeLabel.split(' - ')
                     // let sd = dates[0].replace(',', '')
@@ -285,10 +285,14 @@
             }
 
             function drawResizeLabel (direction) {
+                let eventBlock = $($el).find('.EventDetail')
+
                 $elementInfo = JSON.parse(
-                    $($el).find('input[type=hidden]').val()
+                    $(eventBlock).data('data')
                 )
-                console.log($elementInfo)
+                // $elementInfo = JSON.parse(
+                //     $($el).find('EventDetail').data('data')
+                // )
 
                 labelDateStart = moment($elementInfo.start).toDate()
                 labelDateEnd = moment($elementInfo.end).toDate()
