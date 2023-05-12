@@ -258,7 +258,7 @@ console.log('25 + ((75/' + daysDifference + ')*(' + (moment().startOf('day').dif
             resizeWidth: true,
             resizeHeight: false,
             onDragStart: schedule.scheduleEvents.onResizeStart !== null ? schedule.scheduleEvents.onResizeStart : null,
-            onDragEnd: null,
+            onDragEnd: schedule.scheduleEvents.onResizeEnd !== null ? schedule.scheduleEvents.onResizeEnd : null,
             onDrag: schedule.scheduleEvents.onResize !== null ? schedule.scheduleEvents.onResize : null,
             eventMinWidth: schedule.eventMinWidth,
             resizeStep: schedule.resizeStep,

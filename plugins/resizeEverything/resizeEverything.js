@@ -192,37 +192,24 @@
                 $(document).off('mousemove.' + opt.instanceId);
                 $(document).off('mouseup.' + opt.instanceId);
                 window.removeEventListener('mousemove.' + opt.instanceId, resize)
-                $('#resizeTempTimeLabel').remove()
+                $('#resizeTempTimeLabel').remove()      
 
-                // let eventdetail = $($el).children()[0]; 
-                // let timeparagraph = $(eventdetail).children()[1]; 
-                // let newTimeLabel = setTimelabel(whichHandle, $(timeparagraph).html(), 24 * 60 / $('.ScheduleDay').width(), $($el).width() - original_width)
-                // $(timeparagraph).html(newTimeLabel)
-                // let eventnameParagraph = $(eventdetail).children()[0]
-                // let eventnameParagraphText = $(eventnameParagraph).html()
-                // let newTitle = eventnameParagraphText + ' ' + newTimeLabel
-                // $(eventdetail).attr('data-bs-original-title', newTitle)
-                
-                if (options.redrawFunc) {
-                    let eventData = JSON.parse( $($el).find('.EventDetail').data('data') )
+                let eventData = JSON.parse( $($el).find('.EventDetail').data('data') )
+                let sDate = dateParse(labelDateStart.toLocaleString())
+                let eDate = dateParse(labelDateEnd.toLocaleString())                 
 
-                    // let dates = newTimeLabel.split(' - ')
-                    // let sd = dates[0].replace(',', '')
-                    // let ed = dates[1].replace(',', '')
+                let updatedData = {
+                    startDate: moment(sDate),
+                    endDate: moment(eDate),
+                    eventId: eventData.id
+                }
 
-                    let sDate = dateParse(labelDateStart.toLocaleString())
-                    let eDate = dateParse(labelDateEnd.toLocaleString())                 
-
-                    let updatedData = {
-                        startDate: moment(sDate),
-                        endDate: moment(eDate),
-                        eventId: eventData.id
-                    }
+                if (options.redrawFunc) {                    
                     options.redrawFunc(eventData.locationId, updatedData)
                 }
 
                 if (opt.onDragEnd) {
-                    opt.onDragEnd(e /*params*/)
+                    opt.onDragEnd(updatedData)
                 }
             }
 
