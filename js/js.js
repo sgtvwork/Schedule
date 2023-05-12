@@ -6,37 +6,49 @@ function DrawSchedule(schedule)
 
     if(scheduleVariable.goblin != true) scheduleVariable.goblin = false;
 
-    //Контекстное меню (Пока не помещал в общий объект, существует как глобальная переменная)
+    //Контекстное меню 
+    var lastContextMenuTarget
+    var defaultContextMenu = [
+        {
+            text: 'Создать',
+            target: 'both',
+            disabled: false,
+            onClick: function (e) {
+                AddNewEvent(e)
+            }
+        },
+        {
+            text: 'Изменить',
+            target: 'event',
+            disabled: false,
+            onClick: function (e) {
+                alert('Не сегодня, дружок-пирожок')
+            }
+        },
+        {
+            text: 'Клонировать',
+            target: 'event',
+            disabled: true,
+            onClick: function (e) {
+                alert(e.target)
+            }
+        },
+        {
+            text: 'Удалить',
+            target: 'event',
+            disabled: false,
+            onClick: function (e) {
+                deleteEvent()
+            }
+        }
+    ];
     var dayContextMenu;
     var contextMenuExists = false
     if (schedule.contextMenu === 'default') {
-        dayContextMenu = [
-            {
-                text: "Создать",
-                disabled: false,
-                lClick: function(){ 
-                    console.log('Context button', "Создать", this);
-                }
-            },
-            {
-                text: "Переместить",
-                disabled: true,
-                lClick: function(){ console.log('Context button', "Переместить");}
-            },
-            {
-                text: "Редактировать",
-                disabled: true,
-                lClick: function(){ console.log('Context button', "Редактировать");}
-            },
-            {
-                text: "Удалить",
-                disabled: false,
-                lClick: function(){ console.log('Context button', "Удалить");}
-            }
-        ];
+        dayContextMenu = defaultContextMenu
     }
     else if (schedule.contextMenu) {
-        dayContextMenu = schedule.contextMenu
+        dayContextMenu = defaultContextMenu.concat(schedule.contextMenu)
     }    
     else {
         dayContextMenu = null
@@ -111,7 +123,7 @@ console.log('25 + ((75/' + daysDifference + ')*(' + (moment().startOf('day').dif
             var timeZone = document.createElement('li');
             timeZone.classList = 'ScheduleDay';    
             timeZone.setAttribute('childnumber', i+1);
-            timeZone.addEventListener('click', AddNewEvent);
+            // timeZone.addEventListener('click', AddNewEvent);
 
             if (schedule.contextMenu) {
                 timeZone.addEventListener('contextmenu', DrawContextMenu);
@@ -427,10 +439,10 @@ console.log('25 + ((75/' + daysDifference + ')*(' + (moment().startOf('day').dif
     
     //Отрисовка контекстного меню(элементы контекста)
     //Возможно как доп параметр надо передавать объект по которому кликнули, для более корректной отрисовки
-    function DrawContextMenu(){
-
+    function DrawContextMenu (e) {               
         $('.daysContextMenu').remove();
         contextMenuExists = false;
+        lastContextMenuTarget = e
 
         var menuContainer = $('<div>',{
             class: 'list-group daysContextMenu',
@@ -447,16 +459,25 @@ console.log('25 + ((75/' + daysDifference + ')*(' + (moment().startOf('day').dif
                 type: 'button',
                 class: 'list-group-item list-group-item-action',
                 disabled: option.disabled
-            }).on('click', option.lClick);
-
-            menuContainer.append(menuButton);
-
+            }).on('click', option.onClick);
+            
             var menuSpan = $('<span>',{
                 class: 'contextSpan',
                 text: option.text
             });
-
+            
             menuButton.append(menuSpan);
+
+            if (e.target.parentElement.className.indexOf('DaysContainer') !== -1) {
+                if (option.target === 'both' || option.target === 'timeline') {                    
+                    menuContainer.append(menuButton);
+                }
+            } 
+            else if (e.target.parentElement.className.indexOf('EventDetail') !== -1) {
+                if (option.target === 'both' || option.target === 'event') {                    
+                    menuContainer.append(menuButton);
+                }
+            }            
         }
 
         $('body').append(menuContainer);
@@ -480,9 +501,9 @@ console.log('25 + ((75/' + daysDifference + ')*(' + (moment().startOf('day').dif
 
     //Добавление нового события на таймлайн
     function AddNewEvent(e) {
-        if (e.target.className === 'ScheduleDay') {
-            if (!contextMenuExists) {
-                let $target = $(e.target).closest('.ScheduleDay');
+        // if (e.target.className === 'ScheduleDay') {
+            // if (!contextMenuExists) {
+                let $target = $(lastContextMenuTarget.target).closest('.ScheduleDay');
                 let eventId = 0 + (Math.min(...schedule.events.map(event => event.id < 0))) - 1;
                 let eventLocationId = $target.find('input[name="LocationId"]').val();
                 
@@ -502,8 +523,21 @@ console.log('25 + ((75/' + daysDifference + ')*(' + (moment().startOf('day').dif
                 schedule.scheduleEvents.onCreateEvent(eventObj);
                 
                 return;
-            }            
-        }        
+            // }            
+        // }        
+    }
+
+    function deleteEvent () {
+        let $target = $(lastContextMenuTarget.target).closest('.EventDetail');
+        console.log($target)
+        let eventData = JSON.parse( $($target).find('input[type=hidden]').val() )
+        let eventLocationId = eventData.locationId
+        let eventId = eventData.id
+
+        let newEventsArray = schedule.events.filter(item => !(item.locationId === eventLocationId && item.id === eventId))
+        schedule.events = newEventsArray
+        RedrawRow(eventLocationId);
+        schedule.scheduleEvents.onDeleteEvent();
     }
 
     //Вспомогательные функции для дат в отрисовке шапки

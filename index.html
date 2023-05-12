@@ -177,31 +177,19 @@
             }
             console.log('created elem', text);
         },
+        onDeleteEvent: function () {
+            console.log('событие удалено')
+        }
     }
 
-    //Кастомное ПКМ меню
+    //Доп кнопки для ПКМ меню
     var cMenu = [
         {
-            text: 'Привет',
-            day: true,
-            event: false,
+            text: 'Дополнительное действие',
+            target: 'both',
             disabled: false,
-            lClick: function (e) {
-                alert(e.target)
-            }
-        },
-        {
-            text: 'Пока',
-            disabled: false,
-            lClick: function (e) {
-                alert(e.target)
-            }
-        },
-        {
-            text: 'Моё почтение',
-            disabled: false,
-            lClick: function (e) {
-                alert(e.target)
+            onClick: function (e) {
+                alert("Я бесполезен, отстань")
             }
         }
     ]
