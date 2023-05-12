@@ -241,7 +241,7 @@ console.log('25 + ((75/' + daysDifference + ')*(' + (moment().startOf('day').dif
             onDrag: schedule.scheduleEvents.onResize !== null ? schedule.scheduleEvents.onResize : null,
             eventMinWidth: schedule.eventMinWidth,
             resizeStep: schedule.resizeStep,
-            redrawFunc: function (locationId, data) {
+            redrawFunc: function (locationId, data) {                
                 var event = schedule.events.find(x => x.id === data.eventId);
                 event.start = data.startDate;
                 event.end = data.endDate;
@@ -477,7 +477,7 @@ console.log('25 + ((75/' + daysDifference + ')*(' + (moment().startOf('day').dif
         if (e.target.className === 'ScheduleDay') {
             if (!contextMenuExists) {
                 let $target = $(e.target).closest('.ScheduleDay');
-                let eventId = Math.max(...schedule.events.map(event => event.id)) + 1;
+                let eventId = 0 + (Math.min(...schedule.events.map(event => event.id < 0))) - 1;
                 let eventLocationId = $target.find('input[name="LocationId"]').val();
                 
                 var eventObj = {
