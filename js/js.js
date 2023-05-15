@@ -75,8 +75,6 @@ function DrawSchedule(scheduleData)
         //Отрисовка шапки
         scheduleContainer.append(GetScheduleHeader(daysDifference));
 
-    console.log('25 + ((75/' + daysDifference + ')*(' + (moment().startOf('day').diff(moment(schedule.start).startOf('day'), 'days')) + '))=',25 + ((75/daysDifference) * (moment().startOf('day').diff(moment(schedule.start).startOf('day'), 'days'))));
-
         if(moment().startOf('day') >= schedule.start && moment().startOf('day') <= schedule.end){
 
             var todayLine = document.createElement('div');
