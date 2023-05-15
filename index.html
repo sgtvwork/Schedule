@@ -61,7 +61,7 @@
             locationId: 1,
             name: "EventName1",
             extClass: "",
-            start: moment().add('1','day').startOf('day').hour(9),
+            start: moment().add('1','day').startOf('day').hour(9).minute(25),
             end: moment().add('2','day').startOf('day').hour(9).add('4','hour'),
             userData: {
                 value1: 1,
@@ -157,8 +157,8 @@
         onContextMenuEvent: null,
         onContextMenuTimeline: null,
         onResizeStart: function (p1, p2, p3) {
-            console.log('parameters')
-            console.log(p1, p2, p3)
+            // console.log('parameters')
+            // console.log(p1, p2, p3)
         },
         onResize: function (e) {
             let number = 0;
@@ -205,13 +205,13 @@
     var scheduleVariable = {
         title: 'Комнаты / Даты',
         start: moment().startOf('day').add('-12', 'day'),
-        end: moment().endOf('day').add('20', 'day'),
+        end: moment().endOf('day').add('10', 'day'),
         locations: locations,
         events: events,
         scheduleEvents: scheduleEvents,
         //null, 'default', custom{}
         contextMenu: cMenu,
-        resizeStep: 1, //hours
+        resizeStep: 2, //hours
         eventMinWidth: 24, //hours
         goblin: true
     }

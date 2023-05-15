@@ -100,10 +100,8 @@
                 labelWidth = $(label).width() * 1.3 
                 $(label).css('left', e.clientX + 'px').css('top', e.clientY - 20 + 'px')
                 if (whichHandle === 'stickL') {
-                    console.log('if', labelWidth)
                     $(label).css('left', e.clientX - labelWidth + 'px')
-                }                    
-
+                }
 
                 if (opt.onDragStart) {
                     if (opt.onDragStart(e, $el, opt) === false){
@@ -116,7 +114,8 @@
             resizerR.on("mousedown." + opt.instanceId, mouseDown);
             function resize (e) {
                 let dayWidth = $('.ScheduleDay').width()
-                let minWidth = dayWidth / options.eventMinWidth
+                // let minWidth = dayWidth / options.eventMinWidth
+                let minWidth = dayWidth * options.eventMinWidth / 24
 
                 let elParent = $($el).parent()
                 let parentOfParent = $(elParent).parent()
@@ -148,15 +147,13 @@
                             newLeftPrc = (original_x + (e.pageX - original_mouse_x)) * leftPrc / original_x
                         }
 
-                        let check = (original_width - width)
-                        let direction = check > 0 ? 'r' : 'l'
-                        if (Math.abs(check) > step) {
+                        let delta = (original_width - width)
+                        let direction = delta > 0 ? 'r' : 'l'
+                        if (Math.abs(delta) > step) {
                             step += stepStart
-                            // $el[0].style.width = width + 8 + 'px'
-                            $el[0].style.width = prc + '%'
-                            // $el[0].style.left = original_x + (e.pageX - original_mouse_x) + 'px'                    
+                            $el[0].style.width = prc + '%'                   
                             $el[0].style.left = newLeftPrc + '%'   
-                            changeResizeLabelText('l', direction)
+                            changeResizeLabelText('l', direction, delta)
                             setTimelabel2()
                             $('#resizeTempTimeLabel').css('left', e.clientX - labelWidth + 'px')
                         }                                     
@@ -165,16 +162,15 @@
                 else if (whichHandle.indexOf('stickR') !== -1) {
                     const width = original_width + (e.pageX - original_mouse_x);
                     if (width >= minWidth && width <= rightRange) {
-                        let check = (original_width - width)
-                        let direction = check > 0 ? 'l' : 'r'
-                        // console.log(check, step)
-
-                        if (Math.abs(check) > step) {
+                        let delta = (original_width - width) //изменение длины
+                        let direction = delta > 0 ? 'l' : 'r'                      
+                        
+                        if (Math.abs(delta) > step) {
                             step += stepStart
-                            let prc = 100 * width / $('.ScheduleDay').width()
-                            // $el[0].style.width = width + 'px'
+                            let prc = 100 * width / $('.ScheduleDay').width()                            
+
                             $el[0].style.width = prc + '%'  
-                            changeResizeLabelText('r', direction)
+                            changeResizeLabelText('r', direction, delta)
                             setTimelabel2()
                             $('#resizeTempTimeLabel').css('left', e.clientX + 'px')
                         }                     
@@ -185,7 +181,7 @@
                     opt.onDrag(e)
                 }
             }
-
+         
             function stopResize(e) {
                 e.stopPropagation();
                 e.preventDefault();
@@ -258,7 +254,9 @@
             }
 
             var labelDateStart = null
+            var labelDateStartMillisec = null
             var labelDateEnd = null
+            var labelDateEndMillisec = null
             var $elementInfo           
 
             function setTimelabel2 () {
@@ -282,7 +280,9 @@
                 // )
 
                 labelDateStart = moment($elementInfo.start).toDate()
+                labelDateStartMillisec = labelDateStart.getTime()
                 labelDateEnd = moment($elementInfo.end).toDate()
+                labelDateEndMillisec = labelDateEnd.getTime()
                 let dateStartStr = labelDateStart.toLocaleString()
                 let dateEndStr = labelDateEnd.toLocaleString()
 
@@ -307,19 +307,40 @@
                 return div1
             }
 
-            function changeResizeLabelText (handler, direction) {
+            function changeResizeLabelText (handler, direction, delta) {
                 // let howManyStepsDone = (step - stepStart) / stepStart
                 // let hours = Math.round( howManyStepsDone * resizeStepParam ) * 60
-                let minutes = resizeStepParam * 60
-                if (direction === 'l') 
-                    minutes *= -1
+                // let minutes = resizeStepParam * 60
+                let dayWidth = $('.ScheduleDay').width()
+                let minutes = 60 * 24 * delta / dayWidth
+                let milliseconds = minutes * 60000
+                // console.log(handler, direction)
+                // console.log(minutes)
+                //ВОЗМОЖНО НАДО ПЕРЕДАТЬ СЮДА ПОСТОЯННУЮ ИЗНАЧАЛЬНУЮ ИЗМЕНЯЕМУЮ ДАТУ, А ТО ИЗМЕНЯЕТСЯ ПО ЭКСПОНЕНТЕ
+                // let data =  $($el).find('.EventDetail').data('data')
+                // let startDate = JSON.parse(data).start
+                // let endDate = JSON.parse(data).end
+                // console.log(startDate, endDate)
+                // console.log(Date.parse(startDate), Date.parse())
+                /*
+                    dayWidth => 60 * 24 min
+                    delta => X min
+                */
+
+                // if (direction === 'l') {
+                //     milliseconds *= -1
+                // }
+                console.log(direction, milliseconds)
                 
                 if (handler === 'l') {                    
-                    let newDateStart = new Date(labelDateStart.setMinutes(labelDateStart.getMinutes() + minutes))                    
+                    // let newDateStart = new Date(labelDateStart.setMinutes(labelDateStart.getMinutes() + minutes))                    
+                    let newDateStart = new Date(labelDateStartMillisec + milliseconds)
+                    labelDateStart = newDateStart
                     $('#resizeTempTimeLabel div').text(newDateStart.toLocaleString())
                 } 
                 else if (handler === 'r') {
-                    let newDateEnd = new Date(labelDateEnd.setMinutes(labelDateEnd.getMinutes() + minutes))                
+                    let newDateEnd = new Date(labelDateEndMillisec - milliseconds)
+                    labelDateEnd = newDateEnd
                     $('#resizeTempTimeLabel div').text(newDateEnd.toLocaleString())    
                 }
             }
