@@ -147,6 +147,6 @@
 
 .never{
     background-image: url('https://media.tenor.com/o656qFKDzeUAAAAC/rick-astley-never-gonna-give-you-up.gif');
-    background-size: repeat;
+    background-repeat: repeat;
     background-position: center;
 }
