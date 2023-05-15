@@ -62,6 +62,14 @@
 
             // Current element to resize
             var $el = $(this);
+
+            let detail = $el.find('.EventDetail')
+            let data = JSON.parse($(detail).data('data'))
+            let date = new Date(data.end)
+            if (date.getTime() < new Date().getTime()) {
+                return 
+            }
+
             // Get both of left and right handles
             var $handle;
             var $handleLeft;
