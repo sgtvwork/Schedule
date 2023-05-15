@@ -15,6 +15,13 @@ function DrawSchedule(scheduleData)
         eventDefaultStartTime: scheduleData.eventDefaultStartTime != undefined ? scheduleData.eventDefaultStartTime : 9
     }
 
+    for(var i = 0; i < schedule.events.length; i++){
+        schedule.events[i].start = moment(schedule.events[i].start);
+        schedule.events[i].end = moment(schedule.events[i].end);
+    }
+
+    console.log('schedule', schedule);
+
     try{    
         //Контекстное меню 
         var lastContextMenuTarget;
@@ -182,7 +189,7 @@ function DrawSchedule(scheduleData)
                         var currEvent = events[e];
 
                         //Отступ сверху
-                        var top = alreadyPushedEvents.filter(x=>x.locationId == currEvent.locationId && x.start < currEvent.end && x.end > currEvent.start).length;
+                        var top = alreadyPushedEvents.filter(x=>x.locationId == currEvent.locationId && x.start <= currEvent.end && x.end >= currEvent.start).length;
 
                         //Контейнер детали мероприятия (полоска)
                         var eventProgressContainer = document.createElement('div');
