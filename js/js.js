@@ -11,7 +11,8 @@ function DrawSchedule(scheduleData)
         contextMenu: scheduleData.contextMenu,
         resizeStep: scheduleData.resizeStep != undefined && scheduleData.resizeStep > 0 ? parseInt(scheduleData.resizeStep) : 1,
         eventMinWidth: scheduleData.eventMinWidth != undefined && scheduleData.eventMinWidth > 0 ? parseInt(scheduleData.eventMinWidth) : 1,
-        goblin: scheduleData.goblin != true ? false : scheduleData.goblin
+        goblin: scheduleData.goblin != true ? false : scheduleData.goblin,
+        eventDefaultStartTime: scheduleData.eventDefaultStartTime != undefined ? scheduleData.eventDefaultStartTime : 9
     }
 
     try{    
@@ -75,7 +76,7 @@ function DrawSchedule(scheduleData)
         //Отрисовка шапки
         scheduleContainer.append(GetScheduleHeader(daysDifference));
 
-    console.log('25 + ((75/' + daysDifference + ')*(' + (moment().startOf('day').diff(moment(schedule.start).startOf('day'), 'days')) + '))=',25 + ((75/daysDifference) * (moment().startOf('day').diff(moment(schedule.start).startOf('day'), 'days'))));
+    //console.log('25 + ((75/' + daysDifference + ')*(' + (moment().startOf('day').diff(moment(schedule.start).startOf('day'), 'days')) + '))=',25 + ((75/daysDifference) * (moment().startOf('day').diff(moment(schedule.start).startOf('day'), 'days'))));
 
         if(moment().startOf('day') >= schedule.start && moment().startOf('day') <= schedule.end){
 
@@ -147,7 +148,10 @@ function DrawSchedule(scheduleData)
                 var dateInfo = document.createElement('input');
                 dateInfo.type = 'hidden';
                 dateInfo.name = 'Date';
-                dateInfo.value = moment(date).format('YYYY-MM-DDTHH:mm:SS.000Z'),
+                dateInfo.value = moment(date).format('YYYY-MM-DDTHH:mm:SS.000Z');                
+                if (moment(date).isBefore(moment())) {
+                    $(timeZone).data('disabled', 'true')
+                }
                 timeZone.append(dateInfo);
 
                 var locationInfo = document.createElement('input');
@@ -452,10 +456,20 @@ function DrawSchedule(scheduleData)
         
         //Отрисовка контекстного меню(элементы контекста)
         //Возможно как доп параметр надо передавать объект по которому кликнули, для более корректной отрисовки
-        function DrawContextMenu (e) {               
+        function DrawContextMenu (e) {     
             $('.daysContextMenu').remove();
             contextMenuExists = false;
             lastContextMenuTarget = e
+
+            console.log($(e.target).position())
+            console.log($('.todayLine').position())
+            
+            // if ($(e.target).data('disabled') === 'true') {
+            //     return false
+            // }
+            if ($(e.target).position().left <= $('.todayLine').position().left) {
+                return false
+            }
 
             var menuContainer = $('<div>',{
                 class: 'list-group daysContextMenu',
@@ -525,8 +539,8 @@ function DrawSchedule(scheduleData)
                         locationId: eventLocationId,
                         name: "Событие " + eventId,
                         extClass: "",
-                        start: moment($target.find('input[name="Date"]').val()).startOf('day').hour(9),
-                        end: moment($target.find('input[name="Date"]').val()).startOf('day').hour(9 + schedule.eventMinWidth)
+                        start: moment($target.find('input[name="Date"]').val()).startOf('day').hour(schedule.eventDefaultStartTime),
+                        end: moment($target.find('input[name="Date"]').val()).startOf('day').hour(schedule.eventDefaultStartTime + schedule.eventMinWidth)
                     };
                     
                     schedule.events.push(eventObj);
