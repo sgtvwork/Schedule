@@ -149,10 +149,11 @@ function DrawSchedule(scheduleData)
                 dateInfo.type = 'hidden';
                 dateInfo.name = 'Date';
                 dateInfo.value = moment(date).format('YYYY-MM-DDTHH:mm:SS.000Z');                
-                if (moment(date).isBefore(moment())) {
-                    $(timeZone).data('disabled', 'true')
-                }
                 timeZone.append(dateInfo);
+                if (moment(date).isBefore(moment().add('-1', 'day'))) {
+                    $(timeZone).data('disabled', 'true')
+                    // $(timeZone).css('background', 'grey')
+                }
 
                 var locationInfo = document.createElement('input');
                 locationInfo.type = 'hidden';
@@ -461,15 +462,38 @@ function DrawSchedule(scheduleData)
             contextMenuExists = false;
             lastContextMenuTarget = e
 
-            console.log($(e.target).position())
-            console.log($('.todayLine').position())
+            // console.log(e)
+            // console.log(e.target)
+            // console.log($(e.target).position())
+            // console.log($('.todayLine').position())
             
+            // клик по дню
+            if (e.target.className.indexOf('ScheduleDay') !== -1) {
+                if ($(e.target).position().left <= $('.todayLine').position().left) {
+                    return
+                }
+            }
+            // клик по эвенту
+            else if (e.target.className.indexOf('EventDetail') !== -1 || e.target.parentElement.className.indexOf('EventDetail') !== -1) {
+                if (e.target.className.indexOf('stick') !== -1) {
+                    return
+                }
+
+                let data = JSON.parse(
+                    $(e.target).closest('.EventDetail').data('data')
+                )
+                let date = moment(data.end)
+                console.log(date)
+                if (date.isBefore(moment())) {
+                    return
+                }
+            }
+
+
             // if ($(e.target).data('disabled') === 'true') {
             //     return false
             // }
-            if ($(e.target).position().left <= $('.todayLine').position().left) {
-                return false
-            }
+            
 
             var menuContainer = $('<div>',{
                 class: 'list-group daysContextMenu',
