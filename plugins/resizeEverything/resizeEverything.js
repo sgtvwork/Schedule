@@ -15,6 +15,7 @@
         return;
 
     $.fn.resizableSafe = function fnResizable(options) {
+
         var defaultOptions = {
             // selector for handle that starts dragging
             handleSelector: null,
@@ -40,11 +41,13 @@
             eventMinWidth: 4,
             redrawFunc: null,
             resizeStep: 4
-    };
+        };
+
         if (typeof options == "object")
             defaultOptions = $.extend(defaultOptions, options);
 
         return this.each(function () {
+
             var opt = $.extend({}, defaultOptions);
             if (!opt.instanceId)
                 opt.instanceId = "rsz_" + new Date().getTime();            
@@ -79,16 +82,24 @@
             $($el).append('<div class="stickR"></div>')
             $($el).append('<div class="stickL"></div>')
 
-            // ----------------------------------------------------------------------
-            // ----------------------------------------------------------------------
             var original_width = 0
+            var original_width2 = 0 //pizdec!
             var original_x = 0
             var original_mouse_x = 0
 
             var resizerL = getHandleLeft(null, $el)
             var resizerR = getHandle(null, $el)
 
-            var labelWidth                
+            var labelWidth        
+            
+            var lastpagex
+            var lastarrow
+
+            var labelDateStart = null
+            var labelDateStartMillisec = null
+            var labelDateEnd = null
+            var labelDateEndMillisec = null
+            var $elementInfo  
 
             function mouseDown (e) {
                 whichHandle = e.target.className
@@ -97,8 +108,10 @@
                 stepStart = $('.ScheduleDay').width() / 24 * resizeStepParam; 
                 step = stepStart
                 original_width = parseFloat($el.width());
+                original_width2 = parseFloat($el.width());
                 original_x = Number($($el).css('left').replace('px',''))
-                original_mouse_x = e.pageX;
+                original_mouse_x = e.pageX; 
+                lastpagex = e.pageX
                 $(document).on('mousemove.' + opt.instanceId, resize);
                 $(document).on('mouseup.' + opt.instanceId, stopResize); 
                 
@@ -117,12 +130,12 @@
                     }                        
                 }
             }
-
+            
             resizerL.on("mousedown." + opt.instanceId, mouseDown);
             resizerR.on("mousedown." + opt.instanceId, mouseDown);
+
             function resize (e) {
                 let dayWidth = $('.ScheduleDay').width()
-                // let minWidth = dayWidth / options.eventMinWidth
                 let minWidth = dayWidth * options.eventMinWidth / 24
 
                 let elParent = $($el).parent()
@@ -141,7 +154,22 @@
                 let rightRange = (commonwidth - leftBorder - original_x)                  
 
                 if (whichHandle.indexOf('stickL') !== -1) {
-                    const width = original_width - (e.pageX - original_mouse_x)
+                    let width = original_width - (e.pageX - original_mouse_x)
+                    let arrow = lastpagex > e.pageX ? 'l' : 'r'
+                    let bulka = directionChanged(lastarrow, arrow)
+                    lastpagex = e.pageX
+                    lastarrow = arrow
+                    if (bulka) {
+                        // labelDateEndMillisec = labelDateEndMillisec * width / original_width
+                        // labelDateEnd = new Date(labelDateEndMillisec)
+                        step = stepStart
+                        original_width = width
+                        original_x = Number($($el).css('left').replace('px',''))
+                        original_mouse_x = e.pageX
+                      
+                        // width = original_width - (e.pageX - original_mouse_x); 
+                    }
+
                     if (width >= minWidth && width <= leftRange) {  
                         
                         let prc = 100 * width / $('.ScheduleDay').width()
@@ -161,35 +189,56 @@
                             step += stepStart
                             $el[0].style.width = prc + '%'                   
                             $el[0].style.left = newLeftPrc + '%'   
-                            changeResizeLabelText('l', direction, delta)
-                            setTimelabel2()
+                            changeResizeLabelText('l', direction, delta, width)
+                            // setTimelabel2()
                             $('#resizeTempTimeLabel').css('left', e.clientX - labelWidth + 'px')
                         }                                     
                     }
                 }
                 else if (whichHandle.indexOf('stickR') !== -1) {
-                    const width = original_width + (e.pageX - original_mouse_x);
+                    let width = original_width + (e.pageX - original_mouse_x);  
+                    let arrow = lastpagex > e.pageX ? 'l' : 'r'
+                    let bulka = directionChanged(lastarrow, arrow)
+                    lastpagex = e.pageX
+                    lastarrow = arrow
+
+                    if (bulka) {
+                        labelDateEndMillisec = labelDateEndMillisec * width / original_width
+                        labelDateEnd = new Date(labelDateEndMillisec)
+                        step = stepStart
+                        original_width = width
+                        original_mouse_x = e.pageX
+                        width = original_width + (e.pageX - original_mouse_x); 
+                    }    
+
                     if (width >= minWidth && width <= rightRange) {
                         let delta = (original_width - width) //изменение длины
-                        let direction = delta > 0 ? 'l' : 'r'                      
-                        
+
                         if (Math.abs(delta) > step) {
-                            step += stepStart
+                            step += stepStart                                         
                             let prc = 100 * width / $('.ScheduleDay').width()                            
 
                             $el[0].style.width = prc + '%'  
-                            changeResizeLabelText('r', direction, delta)
-                            setTimelabel2()
+                            changeResizeLabelText('r', arrow, delta, width)
+                            // setTimelabel2()
                             $('#resizeTempTimeLabel').css('left', e.clientX + 'px')
                         }                     
                     }                    
                 } 
 
+                function directionChanged(previous, now){
+                    // console.log(previous, now)
+                    if (previous === now || previous === null || previous === undefined) {
+                        return false
+                    }
+                    return true
+                }
+
                 if (opt.onDrag) {
                     opt.onDrag(e)
                 }
             }
-         
+            
             function stopResize(e) {
                 e.stopPropagation();
                 e.preventDefault();
@@ -256,16 +305,8 @@
             function dateParse (datestring) {
                 let dateParts = datestring.split(/[.,: ]+/);
                 let correctDate = new Date(dateParts[2], dateParts[1]-1, dateParts[0], dateParts[3], dateParts[4]);
-                console.log('dateparse')
-                console.log(correctDate)
                 return correctDate
-            }
-
-            var labelDateStart = null
-            var labelDateStartMillisec = null
-            var labelDateEnd = null
-            var labelDateEndMillisec = null
-            var $elementInfo           
+            }                     
 
             function setTimelabel2 () {
                 let period = `${labelDateStart.toLocaleString()} - ${labelDateEnd.toLocaleString()}`
@@ -315,46 +356,51 @@
                 return div1
             }
 
-            function changeResizeLabelText (handler, direction, delta) {
-                // let howManyStepsDone = (step - stepStart) / stepStart
-                // let hours = Math.round( howManyStepsDone * resizeStepParam ) * 60
-                // let minutes = resizeStepParam * 60
-                let dayWidth = $('.ScheduleDay').width()
-                let minutes = 60 * 24 * delta / dayWidth
-                let milliseconds = minutes * 60000
-                // console.log(handler, direction)
-                // console.log(minutes)
+            function changeResizeLabelText (handler, direction, delta, width) {
+                let dateDiff = new Date($elementInfo.end).getTime() - new Date($elementInfo.start).getTime()
+                let dateNew = width * dateDiff / original_width2
+
+
+                // let dayWidth = $('.ScheduleDay').width()
+                // let minutes = 60 * 24 * delta / dayWidth
+                // let milliseconds = minutes * 60000
+
+
                 //ВОЗМОЖНО НАДО ПЕРЕДАТЬ СЮДА ПОСТОЯННУЮ ИЗНАЧАЛЬНУЮ ИЗМЕНЯЕМУЮ ДАТУ, А ТО ИЗМЕНЯЕТСЯ ПО ЭКСПОНЕНТЕ
                 // let data =  $($el).find('.EventDetail').data('data')
                 // let startDate = JSON.parse(data).start
                 // let endDate = JSON.parse(data).end
                 // console.log(startDate, endDate)
                 // console.log(Date.parse(startDate), Date.parse())
-                /*
-                    dayWidth => 60 * 24 min
-                    delta => X min
-                */
 
                 // if (direction === 'l') {
                 //     milliseconds *= -1
                 // }
-                console.log(direction, milliseconds)
+                // console.log(direction, milliseconds)
                 
                 if (handler === 'l') {                    
                     // let newDateStart = new Date(labelDateStart.setMinutes(labelDateStart.getMinutes() + minutes))                    
-                    let newDateStart = new Date(labelDateStartMillisec + milliseconds)
+                    // let newDateStart = new Date(labelDateStartMillisec + milliseconds)
+                    let newDateStart = new Date(new Date($elementInfo.end).getTime() - dateNew)
                     labelDateStart = newDateStart
                     $('#resizeTempTimeLabel div').text(newDateStart.toLocaleString())
                 } 
                 else if (handler === 'r') {
-                    let newDateEnd = new Date(labelDateEndMillisec - milliseconds)
+                    // let newDateEnd = new Date(labelDateEndMillisec - milliseconds)   
+                    // let newDateEnd = new Date(dateNew)
+                    let newDateEnd = new Date(new Date($elementInfo.start).getTime() + dateNew)
                     labelDateEnd = newDateEnd
                     $('#resizeTempTimeLabel div').text(newDateEnd.toLocaleString())    
                 }
             }
 
-            // ----------------------------------------------------------------------
-            // ----------------------------------------------------------------------
+            function getHandle(selector, $el) {
+                return $el.find('.stickR')
+            } 
+
+            function getHandleLeft(selector, $el) {
+                return $el.find('.stickL')
+            } 
 
             if (options === 'destroy') {            
                 opt = $el.data('resizable');
@@ -380,8 +426,6 @@
           
             $el.data('resizable', opt);
 
-            // get the drag handle
-
             $handle     = getHandle(opt.handleSelector, $el);
             $handleLeft = getHandleLeft(opt.handleSelector, $el)
 
@@ -391,190 +435,6 @@
             }
 
             $el.addClass("resizable");
-            // $handle    .on("mousedown." + opt.instanceId + " touchstart." + opt.instanceId, startDragging);
-            // $handleLeft.on("mousedown." + opt.instanceId + " left" + " touchstart." + opt.instanceId, startDragging);
-
-            function noop(e) {
-                e.stopPropagation();
-                e.preventDefault();
-            };
-
-            //#region TRASH 
-            //Do not ask, we just need this shit
-            // var OLDWIDTH
-            // var NEWWIDTH
-            // var OLDX
-            // var NEWX
-            // var DIFF_BTW_CURSOR_N_LEFT
-
-            // function startDragging(e) {
-            //     // Prevent dragging a ghost image in HTML5 / Firefox and maybe others    
-            //     if ( e.preventDefault ) {
-            //       e.preventDefault();
-            //     }
-                
-            //     if (e.target.className === 'stickR') {
-            //         whichHandle = 'r'
-            //     }
-            //     else if (e.target.className === 'stickL') {
-            //         whichHandle = 'l'
-            //     }
-
-            //     startPos = getMousePos(e);
-            //     startPos.width = parseInt($el.width(), 10);
-            //     startPos.height = parseInt($el.height(), 10);
-
-            //     OLDWIDTH = startPos.width
-            //     OLDX = startPos.x
-            //     DIFF_BTW_CURSOR_N_LEFT = OLDX - Number($($el).css('left').slice(0,-2))
-
-            //     startTransition = $el.css("transition");
-            //     $el.css("transition", "none");
-
-            //     if (opt.onDragStart) {
-            //         if (opt.onDragStart(e, $el, opt) === false)
-            //             return;
-            //     }
-                
-            //     $(document).on('mousemove.' + opt.instanceId, doDrag);
-            //     $(document).on('mouseup.' + opt.instanceId, stopDragging);           
-            //     if (window.Touch || navigator.maxTouchPoints) {
-            //         $(document).on('touchmove.' + opt.instanceId, doDrag);
-            //         $(document).on('touchend.' + opt.instanceId, stopDragging);
-            //     }
-            //     $(document).on('selectstart.' + opt.instanceId, noop); // disable selection
-            //     $("iframe").css("pointer-events","none");
-            // }
-
-            // function doDrag(e) { 
-            //     let pos = getMousePos(e)
-
-            //     let dayWidth = $('.day').width()
-            //     let minWidth = dayWidth / options.eventMinWidth
-
-            //     let eventWidthPx = $($el).width()
-            //     let elParent = $($el).parent()
-            //     let parentWidthPx = $(elParent).width()
-            //     let eventWidthPrc = parentWidthPx / eventWidthPx * 100
-            //     let parentOfParent = $(elParent).parent()
-            //     let dayscount = $(parentOfParent).children()
-            //     let childNumber = $(elParent).attr('childnumber')
-                
-            //     let hz = 0
-            //     for (let index = 1; index < childNumber; index++) {
-            //        hz++
-            //     }
-
-            //     let commonw = dayWidth * 6                
-            //     let leftBorder = hz * dayWidth                
-            //     let ll = Number($($el).css('left').slice(0,-2))
-            //     let leftRange = eventWidthPx + leftBorder + ll
-            //     let rightRange = (commonw - leftBorder - ll)
-            //     console.log(eventWidthPx)
-            //     console.log(commonw)
-            //     // console.log(commonw)
-            //     // console.log(leftBorder)
-            //     // console.log(ll)
-            //     // console.log(eventWidthPx)
-            //     // console.log(commonw - leftBorder - ll - eventWidthPx)
-
-
-
-            //     if (whichHandle === 'r') {
-            //         if (opt.resizeWidthFrom === 'left')
-            //             newWidth = startPos.width - pos.x + startPos.x;
-            //         else{
-            //             newWidth = startPos.width + pos.x - startPos.x;
-            //         }
-
-            //         if (opt.resizeHeightFrom === 'top')
-            //             newHeight = startPos.height - pos.y + startPos.y;
-            //         else
-            //             newHeight = startPos.height + pos.y - startPos.y;
-
-            //         if (!opt.onDrag || opt.onDrag(e, $el, newWidth, newHeight, opt) !== false) {
-            //             if (opt.resizeHeight)
-            //                 $el.height(newHeight); 
-
-            //             if (newWidth >= minWidth) {
-            //                 if (opt.resizeWidth){
-            //                     if (newWidth <= rightRange) {
-            //                         $el.width(newWidth);  
-            //                     }                                  
-            //                 }
-            //             }                                        
-            //         }   
-            //     }
-            //     else if (whichHandle === 'l') {
-            //         let differenceBetweenCursors = e.pageX - OLDX
-            //         NEWX = e.pageX   
-
-            //         // разница больше 0, значит тянем вправо, уменьшая событие
-            //         if (differenceBetweenCursors > 0) {
-            //             NEWWIDTH = OLDWIDTH - (NEWX - OLDX)
-
-            //             if (NEWWIDTH >= minWidth){
-            //                 $($el).css('left', NEWX - DIFF_BTW_CURSOR_N_LEFT + 'px').css('width', NEWWIDTH + 'px')
-            //             }  
-            //         }
-            //         //тянем влево, увеличивая событие
-            //         else if (differenceBetweenCursors < 0){
-            //             NEWWIDTH = OLDWIDTH + (OLDX - NEWX)
-                        
-            //             if (NEWWIDTH >= minWidth){
-            //                 if (NEWWIDTH <= leftRange) {
-            //                     $($el).css('left', NEWX - DIFF_BTW_CURSOR_N_LEFT + 'px').css('width', NEWWIDTH + 'px')
-            //                 }                            
-            //             }  
-            //         }                  
-            //     }
-            // }
-
-            // function stopDragging(e) {
-            //     e.stopPropagation();
-            //     e.preventDefault();
-
-            //     $(document).off('mousemove.' + opt.instanceId);
-            //     $(document).off('mouseup.' + opt.instanceId);
-
-            //     if (window.Touch || navigator.maxTouchPoints) {
-            //         $(document).off('touchmove.' + opt.instanceId);
-            //         $(document).off('touchend.' + opt.instanceId);
-            //     }
-            //     $(document).off('selectstart.' + opt.instanceId, noop);                
-
-            //     // reset changed values
-            //     $el.css("transition", startTransition);
-            //     $("iframe").css("pointer-events","auto");
-
-            //     if (opt.onDragEnd)
-            //         opt.onDragEnd(e, $el, opt);
-
-            //     return false;
-            // }
-
-            // function getMousePos(e) {
-            //     var pos = { x: 0, y: 0, width: 0, height: 0 };
-            //     if (typeof e.pageX === "number") {
-            //         pos.x = e.pageX;
-            //         pos.y = e.clientY;
-            //     } else if (e.originalEvent.touches) {
-            //         pos.x = e.originalEvent.touches[0].pageX;
-            //         pos.y = e.originalEvent.touches[0].clientY;
-            //     } else
-            //         return null;
-
-            //     return pos;
-            // }
-            //#endregion
-
-            function getHandle(selector, $el) {
-                return $el.find('.stickR')
-            } 
-
-             function getHandleLeft(selector, $el) {
-                return $el.find('.stickL')
-            } 
         });
     };
 
