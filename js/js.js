@@ -560,7 +560,9 @@ function DrawSchedule(scheduleData) {
                 end: moment($target.find('input[name="Date"]').val()).startOf('day').hour(schedule.eventDefaultStartTime + schedule.eventMinWidth)
             };
 
-            schedule.events.push(eventObj);
+            if (!eventObj.start.isBefore(moment())) {
+                schedule.events.push(eventObj);                
+            }
 
             RedrawRow(eventLocationId);
 
