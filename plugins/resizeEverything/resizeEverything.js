@@ -132,7 +132,7 @@
                 if (opt.onDragStart) {
                     if (opt.onDragStart(e, $el, opt) === false){
                         return;
-                    }                        
+                    }
                 }
             }
             
