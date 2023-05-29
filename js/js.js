@@ -405,8 +405,16 @@ function DrawSchedule(scheduleData) {
                         var prevLocationId = parseInt($(oldEventParams.parent).find('input[name="LocationId"]').val());
                         currEvent.locationId = newLocationId;
 
-                        RedrawRow(newLocationId);
-                        RedrawRow(prevLocationId);
+                        if (schedule.scheduleEvents.onDragEnd) {
+                            schedule.scheduleEvents.onDragEnd(currEvent, function () {
+                                RedrawRow(newLocationId);
+                                RedrawRow(prevLocationId);
+                            })
+                        }
+                        else {
+                            RedrawRow(newLocationId);
+                            RedrawRow(prevLocationId);
+                        }
 
                         oldEventParams = null;
                     }
