@@ -267,9 +267,11 @@ function DrawSchedule(scheduleData) {
                 eventMinWidth: schedule.eventMinWidth,
                 resizeStep: schedule.resizeStep,
                 redrawFunc: function (locationId, data) {
-                    var event = schedule.events.find(x => x.id === data.eventId);
-                    event.start = data.startDate;
-                    event.end = data.endDate;
+                    if (data) {
+                        var event = schedule.events.find(x => x.id === data.eventId);
+                        event.start = data.startDate;
+                        event.end = data.endDate;
+                    }
                     RedrawRow(locationId);
                 }
             });
@@ -458,14 +460,22 @@ function DrawSchedule(scheduleData) {
 
             // console.log(e)
             // console.log(e.target)
+            // console.log(e.target.className)
             // console.log($(e.target).position())
             // console.log($('.todayLine').position())
             
             // клик по дню
             if (e.target.className.indexOf('ScheduleDay') !== -1) {
-                if ($(e.target).position().left <= $('.todayLine').position().left) {
+                let dayBlock = $(e.target)[0]
+                let inputDate = $(dayBlock).find('input[name="Date"]').val()
+                let mom = moment(inputDate)
+                if (moment().startOf('day').isAfter(mom)) {
                     return
                 }
+
+                // if ($(e.target).position().left <= $('.todayLine').position().left) {
+                //     return
+                // }
             }
             // клик по эвенту
             else if (e.target.className.indexOf('EventDetail') !== -1 || e.target.parentElement.className.indexOf('EventDetail') !== -1) {
@@ -477,7 +487,6 @@ function DrawSchedule(scheduleData) {
                     $(e.target).closest('.EventDetail').data('data')
                 )
                 let date = moment(data.end)
-                console.log(date)
                 if (date.isBefore(moment())) {
                     return
                 }

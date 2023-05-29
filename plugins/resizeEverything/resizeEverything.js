@@ -96,7 +96,11 @@
 
             // Новые даты для ресайзнутых эвентов
             var labelDateStart = null
-            var labelDateEnd = null          
+            var labelDateEnd = null
+
+            //Свойства последнего состояния
+            var lastStateWidth
+            var lastStateLeft
 
             // ------------------------------------------------------------------------
             // ------------------------------------------------------------------------
@@ -124,6 +128,8 @@
                 document.body.appendChild(label)
                 labelWidth = $(label).width() * 1.3 //умножил на 1.3 чтобы лейбл при растяжении за левую грань был вблизи от эвента, но и не перекрывал его. Число просто из головы
                 $(label).css('left', e.clientX + 'px').css('top', e.clientY - 80 + 'px')
+
+                rememberLastState()
 
                 if (whichHandle === 'stickL') {
                     $(label).css('left', e.clientX - labelWidth + 'px')
@@ -230,6 +236,11 @@
                 let sDate = dateParse(labelDateStart.toDate().toLocaleString())
                 let eDate = dateParse(labelDateEnd.toDate().toLocaleString())
 
+                if (moment(sDate).isBefore(moment())) {
+                    returnToLastState()
+                    return
+                }
+
                 let updatedData = {
                     startDate: moment(sDate),
                     endDate: moment(eDate),
@@ -253,7 +264,7 @@
                 let elParent = $($el).parent()
                 let parentOfParent = $(elParent).parent()
                 let daysNumber = $(parentOfParent).children()
-                let childNumber = $(elParent).attr('childnumber')                
+                let childNumber = $(elParent).attr('childnumber')
                 let fullDaysBeforeEvent = 0
                 for (let index = 1; index < childNumber; index++) {
                     fullDaysBeforeEvent++
@@ -264,7 +275,6 @@
                 let leftBorder = fullDaysBeforeEvent * dayWidth
                 leftRange = original_width + leftBorder + original_x
                 rightRange = (commonWidth - leftBorder - original_x)
-                console.log(leftRange, rightRange);
             }
 
             function directionChanged(previous, now) {
@@ -322,6 +332,21 @@
                     else if (arrow === 'l') labelDateEnd = moment(labelDateEnd).add(resizeStepParam * -1, 'hour')
                     
                     $('#resizeTempTimeLabel div').text(labelDateEnd.toDate().toLocaleString())
+                }
+            }
+
+            function rememberLastState () {
+                lastStateWidth = $($el).width();
+                let left = $($el).css('left').slice(0,-2)
+                lastStateLeft = 100 * left / $('.ScheduleDay').width();
+            }
+
+            function returnToLastState () {
+                $($el).width(lastStateWidth)
+                $($el).css('left', lastStateLeft + '%')
+
+                if (options.redrawFunc) {
+                    options.redrawFunc($elementInfo.locationId, null)
                 }
             }
 
