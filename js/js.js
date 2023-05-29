@@ -12,7 +12,7 @@ function DrawSchedule(scheduleData) {
         eventMinWidth: scheduleData.eventMinWidth != undefined && scheduleData.eventMinWidth > 0 ? parseInt(scheduleData.eventMinWidth) : 1,
         goblin: scheduleData.goblin != true ? false : scheduleData.goblin,
         eventDefaultStartTime: scheduleData.eventDefaultStartTime != undefined ? scheduleData.eventDefaultStartTime : 9,
-        allowMovingEventsToThePast: scheduleData.allowMovingEventsToThePast != undefined ? scheduleData.allowMovingEventsToThePast : true
+        allowMovingEventsToThePast: scheduleData.allowMovingEventsToThePast != undefined ? scheduleData.allowMovingEventsToThePast : false
     }
 
     for (var i = 0; i < schedule.events.length; i++) {
@@ -37,8 +37,13 @@ function DrawSchedule(scheduleData) {
                 target: 'event',
                 disabled: false,
                 onClick: function (e) {
-                    alert('Не сегодня, дружок-пирожок');
-                    Never(schedule.goblin);
+                    if (schedule.scheduleEvents.onContextMenuAction_Change) {
+                        let $target = $(lastContextMenuTarget.target).closest('.EventDetail');
+                        let data = JSON.parse(
+                            $($target).data('data')
+                        ) 
+                        schedule.scheduleEvents.onContextMenuAction_Change(data)
+                    }
                 }
             },
             {
@@ -381,7 +386,7 @@ function DrawSchedule(scheduleData) {
                         var daysDiff = newContainerDate.diff(prevContainerDate, 'days');
                         var duration = moment.duration(eventEnd.diff(eventStart));
 
-                        if (schedule.allowMovingEventsToThePast) {
+                        if (!schedule.allowMovingEventsToThePast) {
                             let checkDate = eventStart.clone().add(daysDiff, 'days');
                             checkDate = checkDate.clone().add(duration);
                             if (checkDate.isBefore(moment())) {
@@ -598,14 +603,14 @@ function DrawSchedule(scheduleData) {
             };
 
             if (!eventObj.start.isBefore(moment())) {
-                schedule.events.push(eventObj);                
+                schedule.events.push(eventObj);
             }
 
             RedrawRow(eventLocationId);
 
             schedule.scheduleEvents.onCreateEvent(eventObj);
 
-            return;      
+            return;
         }
 
         function deleteEvent() {

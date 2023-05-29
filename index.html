@@ -164,6 +164,9 @@
         onClickTimeline: null,
         onContextMenuEvent: null,
         onContextMenuTimeline: null,
+        onContextMenuAction_Change: function (data) {
+            console.log(data);
+        },
         onResizeStart: function (p1, p2, p3) {
             // console.log('parameters')
             // console.log(p1, p2, p3)
@@ -222,7 +225,7 @@
         resizeStep: 24, //hours
         eventMinWidth: 22, //hours
         eventDefaultStartTime: 14,
-        allowMovingEventsToThePast: true,
+        allowMovingEventsToThePast: false,
         goblin: true
     }
 
