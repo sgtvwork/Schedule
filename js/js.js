@@ -11,7 +11,8 @@ function DrawSchedule(scheduleData) {
         resizeStep: scheduleData.resizeStep != undefined && scheduleData.resizeStep > 0 ? parseInt(scheduleData.resizeStep) : 1,
         eventMinWidth: scheduleData.eventMinWidth != undefined && scheduleData.eventMinWidth > 0 ? parseInt(scheduleData.eventMinWidth) : 1,
         goblin: scheduleData.goblin != true ? false : scheduleData.goblin,
-        eventDefaultStartTime: scheduleData.eventDefaultStartTime != undefined ? scheduleData.eventDefaultStartTime : 9
+        eventDefaultStartTime: scheduleData.eventDefaultStartTime != undefined ? scheduleData.eventDefaultStartTime : 9,
+        allowMovingEventsToThePast: scheduleData.allowMovingEventsToThePast != undefined ? scheduleData.allowMovingEventsToThePast : true
     }
 
     for (var i = 0; i < schedule.events.length; i++) {
@@ -59,7 +60,6 @@ function DrawSchedule(scheduleData) {
         ];
 
         var dayContextMenu;
-        var contextMenuExists = false;
 
         if (schedule.contextMenu === 'default') {
             dayContextMenu = defaultContextMenu
@@ -247,7 +247,7 @@ function DrawSchedule(scheduleData) {
 
                         //#region drag events
 
-                        AddEventListners(eventProgress, currEvent);
+                        AddEventListeners(eventProgress, currEvent);
 
                         //#endregion drag events
 
@@ -284,13 +284,17 @@ function DrawSchedule(scheduleData) {
 
             //#endregion
         }
-
-        function AddEventListners(eventProgress, currEvent) {
-
+        
+        function AddEventListeners(eventProgress, currEvent) {
+            if (currEvent.end.isBefore(moment())) {
+                return
+            }
             var oldEventParams;
             var currentDroppable;
             var isDragging = false;
             var draggingElement;
+            var topPositionPrevious;
+            var leftPositionPrevious;
 
             $(eventProgress).off('mousedown').on('mousedown', function (e) {
                 switch (e.button) {
@@ -320,7 +324,9 @@ function DrawSchedule(scheduleData) {
                                 document.removeEventListener('mousemove', event);
                                 return;
                             }
-
+                            
+                            topPositionPrevious = draggingElement.offset().top;
+                            leftPositionPrevious = draggingElement.offset().left;
                             const xPositionDifference = event.pageX - draggingElement.offset().left;
                             const yPositionDifference = event.pageY - draggingElement.offset().top;
 
@@ -374,6 +380,23 @@ function DrawSchedule(scheduleData) {
 
                         var daysDiff = newContainerDate.diff(prevContainerDate, 'days');
                         var duration = moment.duration(eventEnd.diff(eventStart));
+
+                        if (schedule.allowMovingEventsToThePast) {
+                            let checkDate = eventStart.clone().add(daysDiff, 'days');
+                            checkDate = checkDate.clone().add(duration);
+                            if (checkDate.isBefore(moment())) {
+                                $(draggingElement).parents('.EventDetailContainer:first').offset({
+                                    top: topPositionPrevious,
+                                    left: leftPositionPrevious
+                                });
+
+                                let locId_1 = parseInt($(eventProgress).parents('.ScheduleDay:first').find('input[name="LocationId"]').val());
+                                let locId_2 = parseInt($(oldEventParams.parent).find('input[name="LocationId"]').val());
+                                RedrawRow(locId_1);
+                                RedrawRow(locId_2);
+                                return
+                            }
+                        }
 
                         currEvent.start = eventStart.add(daysDiff, 'days');
                         currEvent.end = currEvent.start.clone().add(duration);
@@ -455,7 +478,6 @@ function DrawSchedule(scheduleData) {
         //Возможно как доп параметр надо передавать объект по которому кликнули, для более корректной отрисовки
         function DrawContextMenu(e) {
             $('.daysContextMenu').remove();
-            contextMenuExists = false;
             lastContextMenuTarget = e
 
             // console.log(e)
@@ -535,7 +557,6 @@ function DrawSchedule(scheduleData) {
             }
 
             $('body').append(menuContainer);
-            contextMenuExists = true;
             return false
         }
 
@@ -544,7 +565,6 @@ function DrawSchedule(scheduleData) {
             //Удаляем контекстное меню если кликнули мимо
             $(this).on('click', () => {
                 $('.daysContextMenu').remove();
-                contextMenuExists = false
             });
             //Удаляем строчку расширения строки если курсор вышел за границы шахматки
             $(this).on('mouseover', () => {
