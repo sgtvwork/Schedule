@@ -294,7 +294,8 @@ function DrawSchedule(scheduleData) {
                         event.end = data.endDate;
                     }
                     RedrawRow(locationId);
-                }
+                },
+                inactiveZones: schedule.inactiveZones
             });
 
             [].slice.call(eventRow.querySelectorAll('[data-bs-toggle="tooltip"]')).map(function (tooltipTriggerEl) {
@@ -428,28 +429,25 @@ function DrawSchedule(scheduleData) {
                                 for (let i = 0; i < zones.length; i++) {
                                     let zone = zones[i]
 
-                                    console.log('eventstart before', eventStart);
                                     let temp = eventStart.clone()
                                     const eventStartTime = temp.add(daysDiff, 'days');
                                     const eventEndTime = eventStartTime.clone().add(duration);
-                                    console.log('eventstart after', eventStart);
-                                    console.log(eventStartTime, eventEndTime);
                                     const hasIntersection = zone.startTime.isBefore(eventEndTime) && zone.startTime.clone().add(zone.duration, 'day').isAfter(eventStartTime)
                                     
-                                    console.log('intersection');
-                                    console.log(hasIntersection);
-                                    console.log(
-                                        'zone', 
-                                        moment(zone.startTime).toDate(), 
-                                        moment(zone.startTime).clone().add(zone.duration, 'day').toDate()
-                                        );
+                                    // console.log('intersection');
+                                    // console.log(hasIntersection);
+                                    // console.log(
+                                    //     'zone', 
+                                    //     moment(zone.startTime).toDate(), 
+                                    //     moment(zone.startTime).clone().add(zone.duration, 'day').toDate()
+                                    //     );
                                         
-                                    console.log(
-                                        'event', 
-                                        moment(eventStartTime).toDate(), 
-                                        moment(eventEndTime).toDate()
-                                        );
-                                    console.log('--------------------');
+                                    // console.log(
+                                    //     'event', 
+                                    //     moment(eventStartTime).toDate(), 
+                                    //     moment(eventEndTime).toDate()
+                                    //     );
+                                    // console.log('--------------------');
                                     
 
                                     if (hasIntersection) {

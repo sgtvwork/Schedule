@@ -40,7 +40,8 @@
             instanceId: null,
             eventMinWidth: 4,
             redrawFunc: null,
-            resizeStep: 4
+            resizeStep: 4,
+            inactiveZones: null
         }
 
         if (typeof options == "object")
@@ -149,6 +150,18 @@
                 if (whichHandle.indexOf('stickL') !== -1) {
                     let width = original_width - (e.pageX - original_mouse_x)
                     let currentDirection = lastPageX > e.pageX ? 'l' : 'r'
+
+                    if (lastPageX > e.pageX) {
+                        currentDirection = 'l'
+                    } 
+                    else if (lastPageX < e.pageX) {
+                        currentDirection = 'r'
+                    }
+                    else {
+                        currentDirection = lastDirection
+                    }
+
+
                     let didDirectionChanged = directionChanged(lastDirection, currentDirection)
 
                     if (didDirectionChanged) {
@@ -189,9 +202,20 @@
                 }
                 else if (whichHandle.indexOf('stickR') !== -1) {
                     let width = original_width + (e.pageX - original_mouse_x)
-                    let currentDirection = width > lastWidth ? 'r' : 'l'
-                    let didDirectionChanged = directionChanged(lastDirection, currentDirection)
+                    let currentDirection //= width > lastWidth ? 'r' : 'l'
 
+                    if (width > lastWidth) {
+                        currentDirection = 'r'
+                    } 
+                    else if (width < lastWidth) {
+                        currentDirection = 'l'
+                    }
+                    else {
+                        currentDirection = lastDirection
+                    }
+
+                    let didDirectionChanged = directionChanged(lastDirection, currentDirection)
+                    
                     if (didDirectionChanged) {
                         step = stepStart
                         original_width = width
@@ -205,6 +229,7 @@
                     if (width >= minWidth && width <= rightRange) {
                         let deltaWidth = original_width - width
                         // смысл в том, что как только изменение ширины превышает шаг, то можно расширять
+                        // console.log(Math.abs(deltaWidth), step);
                         if (Math.abs(deltaWidth) > step) {
                             let widthInPercent
                             if (currentDirection === 'r') widthInPercent = 100 * (original_width + step) / $('.ScheduleDay').width()
@@ -236,9 +261,24 @@
                 let sDate = dateParse(labelDateStart.toDate().toLocaleString())
                 let eDate = dateParse(labelDateEnd.toDate().toLocaleString())
 
-                if (moment(sDate).isBefore(moment())) {
+                if (moment(sDate).isBefore(moment()) && whichHandle === 'stickL') {
                     returnToLastState()
                     return
+                }
+
+                if (opt.inactiveZones) {
+                    let zones = opt.inactiveZones.filter(x => x.locationId === $elementInfo.locationId)                    
+                    if (zones.length > 0) {
+                        for (let i = 0; i < zones.length; i++) {
+                            const zone = zones[i];
+                            const hasIntersection = zone.startTime.isBefore(eDate) && zone.startTime.clone().add(zone.duration, 'day').isAfter(sDate)
+
+                            if (hasIntersection) {
+                                returnToLastState()
+                                return
+                            }
+                        }
+                    }
                 }
 
                 let updatedData = {
