@@ -4,6 +4,7 @@ function DrawSchedule(scheduleData) {
         title: scheduleData.title != undefined && scheduleData.title.length > 0 ? scheduleData.title : 'Помещения',
         start: scheduleData.start != undefined ? moment(scheduleData.start).startOf('day') : moment().add('-2', 'days').startOf('day'),
         end: scheduleData.end != undefined ? moment(scheduleData.end).endOf('day') : moment().add('5', 'days').endOf('day'),
+        inactiveZones: scheduleData.inactiveZones != undefined ? scheduleData.inactiveZones : null,
         locations: scheduleData.locations != undefined && scheduleData.locations.length > 0 ? scheduleData.locations : [],
         events: scheduleData.events != undefined && scheduleData.events.length > 0 ? scheduleData.events : [],
         scheduleEvents: scheduleData.scheduleEvents,
@@ -155,13 +156,28 @@ function DrawSchedule(scheduleData) {
                 dateInfo.type = 'hidden';
                 dateInfo.name = 'Date';
                 dateInfo.value = moment(date).format('YYYY-MM-DDTHH:mm:SS.000Z');
-                if (moment(date).isBefore(moment())) {
-                    $(timeZone).data('disabled', 'true')
-                }
                 timeZone.append(dateInfo);
-                if (moment(date).isBefore(moment().add('-1', 'day'))) {
-                    $(timeZone).data('disabled', 'true')
-                    // $(timeZone).css('background', 'grey')
+                
+                //Отрисовка неактивных зон
+                if (schedule.inactiveZones) {
+                    let zones = scheduleData.inactiveZones.filter(x => x.locationId == location.id)
+                    if (zones.length > 0) {
+
+                        for (let i = 0; i < zones.length; i++) {
+                            const zoneStart = moment(zones[i].startTime)
+                            const zoneEnd = moment(zones[i].startTime).clone().add(zones[i].duration, 'day')
+                            if (
+                                moment(date).isSameOrAfter(zoneStart)
+                                &&
+                                moment(date).isBefore(zoneEnd)
+                            )
+                            {
+                                $(timeZone).addClass('scheduleInactiveZone')
+                                $(timeZone).data('inactive', true)
+                            }
+                        }
+                        
+                    }
                 }
 
                 var locationInfo = document.createElement('input');
@@ -386,20 +402,67 @@ function DrawSchedule(scheduleData) {
                         var daysDiff = newContainerDate.diff(prevContainerDate, 'days');
                         var duration = moment.duration(eventEnd.diff(eventStart));
 
+                        // Если нельзя перемещать эвенты в прошлое
+                        let newLocId = parseInt($(eventProgress).parents('.ScheduleDay:first').find('input[name="LocationId"]').val());
+                        let prevLocId = parseInt($(oldEventParams.parent).find('input[name="LocationId"]').val());
                         if (!schedule.allowMovingEventsToThePast) {
                             let checkDate = eventStart.clone().add(daysDiff, 'days');
                             checkDate = checkDate.clone().add(duration);
+
                             if (checkDate.isBefore(moment())) {
                                 $(draggingElement).parents('.EventDetailContainer:first').offset({
                                     top: topPositionPrevious,
                                     left: leftPositionPrevious
                                 });
-
-                                let locId_1 = parseInt($(eventProgress).parents('.ScheduleDay:first').find('input[name="LocationId"]').val());
-                                let locId_2 = parseInt($(oldEventParams.parent).find('input[name="LocationId"]').val());
-                                RedrawRow(locId_1);
-                                RedrawRow(locId_2);
+                                
+                                RedrawRow(newLocId);
+                                RedrawRow(prevLocId);
                                 return
+                            }
+                        }
+
+                        // Если эвент перемещаем в неактивную зону
+                        if (schedule.inactiveZones) {
+                            let zones = schedule.inactiveZones.filter(x => x.locationId == newLocId)
+                            if (zones.length > 0) {
+                                for (let i = 0; i < zones.length; i++) {
+                                    let zone = zones[i]
+
+                                    console.log('eventstart before', eventStart);
+                                    let temp = eventStart.clone()
+                                    const eventStartTime = temp.add(daysDiff, 'days');
+                                    const eventEndTime = eventStartTime.clone().add(duration);
+                                    console.log('eventstart after', eventStart);
+                                    console.log(eventStartTime, eventEndTime);
+                                    const hasIntersection = zone.startTime.isBefore(eventEndTime) && zone.startTime.clone().add(zone.duration, 'day').isAfter(eventStartTime)
+                                    
+                                    console.log('intersection');
+                                    console.log(hasIntersection);
+                                    console.log(
+                                        'zone', 
+                                        moment(zone.startTime).toDate(), 
+                                        moment(zone.startTime).clone().add(zone.duration, 'day').toDate()
+                                        );
+                                        
+                                    console.log(
+                                        'event', 
+                                        moment(eventStartTime).toDate(), 
+                                        moment(eventEndTime).toDate()
+                                        );
+                                    console.log('--------------------');
+                                    
+
+                                    if (hasIntersection) {
+                                        $(draggingElement).parents('.EventDetailContainer:first').offset({
+                                            top: topPositionPrevious,
+                                            left: leftPositionPrevious
+                                        });
+        
+                                        RedrawRow(newLocId);
+                                        RedrawRow(prevLocId);
+                                        return
+                                    }
+                                }
                             }
                         }
 
@@ -602,13 +665,30 @@ function DrawSchedule(scheduleData) {
                 end: moment($target.find('input[name="Date"]').val()).startOf('day').hour(schedule.eventDefaultStartTime + schedule.eventMinWidth)
             };
 
-            if (!eventObj.start.isBefore(moment())) {
-                schedule.events.push(eventObj);
+            // if (!eventObj.start.isBefore(moment())) {
+            //     schedule.events.push(eventObj);
+            // }
+
+            // RedrawRow(eventLocationId);
+
+            // schedule.scheduleEvents.onCreateEvent(eventObj);
+
+            let preloader = $('#HGSCH_preloader')
+            if (preloader) {
+                $(preloader).show()
             }
-
-            RedrawRow(eventLocationId);
-
-            schedule.scheduleEvents.onCreateEvent(eventObj);
+            
+            if (!eventObj.start.isBefore(moment())) {
+                if (schedule.scheduleEvents.onCreateEvent) {
+                    schedule.scheduleEvents.onCreateEvent(eventObj, function () {
+                        RedrawRow(eventLocationId);
+                    });
+                }
+                else {
+                    schedule.events.push(eventObj);
+                    RedrawRow(eventLocationId);
+                }
+            }
 
             return;
         }

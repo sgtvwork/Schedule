@@ -116,22 +116,22 @@
             start: moment().add('-10','day').startOf('day').hour(3),
             end: moment().endOf('day').add('10', 'day')
         },
-        {
-            id: 8,
-            locationId: 3,
-            name: "00-06",
-            extClass: "",
-            start: moment().add('1','day').startOf('day').hour(00),
-            end: moment().add('1','day').startOf('day').hour(06)
-        },
-        {
-            id: 9,
-            locationId: 3,
-            name: "07-09",
-            extClass: "",
-            start: moment().add('1','day').startOf('day').hour(07),
-            end: moment().add('1','day').startOf('day').hour(09)
-        },
+        // {
+        //     id: 8,
+        //     locationId: 3,
+        //     name: "00-06",
+        //     extClass: "",
+        //     start: moment().add('1','day').startOf('day').hour(00),
+        //     end: moment().add('1','day').startOf('day').hour(06)
+        // },
+        // {
+        //     id: 9,
+        //     locationId: 3,
+        //     name: "07-09",
+        //     extClass: "",
+        //     start: moment().add('1','day').startOf('day').hour(07),
+        //     end: moment().add('1','day').startOf('day').hour(09)
+        // },
         {
             id: 10,
             locationId: 6,
@@ -158,6 +158,24 @@
         }
     ];
 
+    var inactiveZones = [
+        {
+            locationId: 5,
+            startTime: moment().startOf('day').add('3', 'day'),
+            duration: 4
+        },
+        // {
+        //     locationId: 2,
+        //     startTime: moment().startOf('day').add(-10, 'day'),
+        //     duration: 8
+        // },
+        {
+            locationId: 2,
+            startTime: moment().startOf('day').add(5, 'day'),
+            duration: 8
+        }
+    ]
+
     //События при нажатии кнопок мыши по сетке
     var scheduleEvents = {
         onClickEvent: null,
@@ -176,7 +194,7 @@
         onDragStart: null,
         onDrag: null,
         onDragEnd: function (data, func) {
-            console.log(data);
+            // console.log(data);
             func()
         },
         onRenderStart: null,
@@ -217,6 +235,7 @@
         title: 'Комнаты / Даты',
         start: moment().startOf('day').add('-12', 'day'),
         end: moment().endOf('day').add('10', 'day'),
+        inactiveZones: inactiveZones,
         locations: locations,
         events: events,
         scheduleEvents: scheduleEvents,
