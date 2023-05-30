@@ -229,7 +229,6 @@
                     if (width >= minWidth && width <= rightRange) {
                         let deltaWidth = original_width - width
                         // смысл в том, что как только изменение ширины превышает шаг, то можно расширять
-                        // console.log(Math.abs(deltaWidth), step);
                         if (Math.abs(deltaWidth) > step) {
                             let widthInPercent
                             if (currentDirection === 'r') widthInPercent = 100 * (original_width + step) / $('.ScheduleDay').width()
