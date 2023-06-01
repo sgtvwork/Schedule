@@ -585,6 +585,11 @@ function DrawSchedule(scheduleData) {
             // console.log(e.target.className)
             // console.log($(e.target).position())
             // console.log($('.todayLine').position())
+
+            //Отрубаем контекст мен по неактивной зоне
+            if (e.target.className.indexOf('scheduleInactiveZone') !== -1) {
+                return
+            }
             
             // клик по дню
             if (e.target.className.indexOf('ScheduleDay') !== -1) {
