@@ -68,22 +68,22 @@
                 value2: 2
             }
         },
-        {
-            id: 2,
-            locationId: 1,
-            name: "EventName2",
-            extClass: "",
-            start: moment().add('1','day').startOf('day').hour(12),
-            end: moment().add('2','day').startOf('day').hour(12)
-        },
-        {
-            id: 7,
-            locationId: 2,
-            name: "01-23",
-            extClass: "",
-            start: moment().add('1','day').startOf('day').hour(01),
-            end: moment().add('1','day').startOf('day').hour(23)
-        },
+        // {
+        //     id: 2,
+        //     locationId: 1,
+        //     name: "EventName2",
+        //     extClass: "",
+        //     start: moment().add('1','day').startOf('day').hour(12),
+        //     end: moment().add('2','day').startOf('day').hour(12)
+        // },
+        // {
+        //     id: 7,
+        //     locationId: 2,
+        //     name: "01-23",
+        //     extClass: "",
+        //     start: moment().add('1','day').startOf('day').hour(01),
+        //     end: moment().add('1','day').startOf('day').hour(23)
+        // },
         {
             id: 3,
             locationId: 2,
@@ -108,14 +108,14 @@
             start: moment().startOf('day'),
             end: moment().endOf('day').add('5', 'day'),
         },
-        {
-            id: 6,
-            locationId: 4,
-            name: "Мероприятие шире сетки",
-            extClass: "",
-            start: moment().add('-10','day').startOf('day').hour(3),
-            end: moment().endOf('day').add('10', 'day')
-        },
+        // {
+        //     id: 6,
+        //     locationId: 4,
+        //     name: "Мероприятие шире сетки",
+        //     extClass: "",
+        //     start: moment().add('-10','day').startOf('day').hour(3),
+        //     end: moment().endOf('day').add('10', 'day')
+        // },
         // {
         //     id: 8,
         //     locationId: 3,
@@ -140,14 +140,14 @@
             start: moment().add('1','day').startOf('day').hour(15),
             end: moment().add('4','day').startOf('day').hour(15)
         },
-        {
-            id: 11,
-            locationId: 6,
-            name: "Мереоприятие на 3 дня с другим началом",
-            extClass: "",
-            start: moment().add('2','day').startOf('day').hour(15),
-            end: moment().add('5','day').startOf('day').hour(15)
-        },        
+        // {
+        //     id: 11,
+        //     locationId: 6,
+        //     name: "Мереоприятие на 3 дня с другим началом",
+        //     extClass: "",
+        //     start: moment().add('2','day').startOf('day').hour(15),
+        //     end: moment().add('5','day').startOf('day').hour(15)
+        // },        
         {
             id: 12,
             locationId: 1,
@@ -245,6 +245,7 @@
         eventMinWidth: 22, //hours
         eventDefaultStartTime: 14,
         allowMovingEventsToThePast: false,
+        allowEventsToOverlap: false,
         goblin: true
     }
 

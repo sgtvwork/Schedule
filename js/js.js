@@ -13,7 +13,8 @@ function DrawSchedule(scheduleData) {
         eventMinWidth: scheduleData.eventMinWidth != undefined && scheduleData.eventMinWidth > 0 ? parseInt(scheduleData.eventMinWidth) : 1,
         goblin: scheduleData.goblin != true ? false : scheduleData.goblin,
         eventDefaultStartTime: scheduleData.eventDefaultStartTime != undefined ? scheduleData.eventDefaultStartTime : 9,
-        allowMovingEventsToThePast: scheduleData.allowMovingEventsToThePast != undefined ? scheduleData.allowMovingEventsToThePast : false
+        allowMovingEventsToThePast: scheduleData.allowMovingEventsToThePast != undefined ? scheduleData.allowMovingEventsToThePast : false,
+        allowEventsToOverlap: scheduleData.allowEventsToOverlap != undefined ? scheduleData.allowEventsToOverlap : false,
     }
 
     for (var i = 0; i < schedule.events.length; i++) {
@@ -419,6 +420,31 @@ function DrawSchedule(scheduleData) {
                                 RedrawRow(newLocId);
                                 RedrawRow(prevLocId);
                                 return
+                            }
+                        }
+
+                        //Если наложение эвентов запрещено
+                        if (!schedule.allowEventsToOverlap) {
+                            let eventsInRow = schedule.events.filter(x => x.locationId === newLocId && x.id !== currEvent.id)
+                            console.log(eventsInRow);
+                            for (let i = 0; i < eventsInRow.length; i++) {
+                                const element = eventsInRow[i];
+                                console.log('element', element);
+                                let temp = eventStart.clone()
+                                const eventStartTime = temp.add(daysDiff, 'days');
+                                const eventEndTime = eventStartTime.clone().add(duration);
+                                const hasIntersection = element.start.isBefore(eventEndTime) && element.end.isAfter(eventStartTime)
+
+                                if (hasIntersection) {
+                                    $(draggingElement).parents('.EventDetailContainer:first').offset({
+                                        top: topPositionPrevious,
+                                        left: leftPositionPrevious
+                                    });
+    
+                                    RedrawRow(newLocId);
+                                    RedrawRow(prevLocId);
+                                    return
+                                }
                             }
                         }
 
